@@ -1,5 +1,5 @@
 #include <torch/extension.h>
-#include 'utils.h'
+#include "utils.h"
 
 torch::Tensor add_cuda(torch::Tensor x, torch::Tensor y) {
   CHECK_INPUT(x);

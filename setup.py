@@ -13,6 +13,7 @@ setup(
     author='adamdad',
     author_email='yxy_adadm@qq.com',
     description='A test project',
+    long_description='',
     ext_modules=[
         CppExtension('my_lib', sources)
     ],
