@@ -1,17 +1,17 @@
 #include <torch/extension.h>
 #include "utils.h"
 
-torch::Tensor add_cuda(torch::Tensor x, torch::Tensor y) {
+torch::Tensor rational_fwd(
+  torch::Tensor x, 
+  torch::Tensor n, 
+  torch::Tensor d) {
   CHECK_INPUT(x);
-  CHECK_INPUT(y);
-  return x + y;
-}
-
-torch::Tensor add_cpu(torch::Tensor x, torch::Tensor y) {
-  return x + y;
+  CHECK_INPUT(n);
+  CHECK_INPUT(d);
+  return rational_fwd_cuda(x, n, d);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("add_cpu", &add_cpu, "add two tensors");
-  m.def("add_cuda", &add_cuda, "add two tensors");
+  m.def("rational_fwd", &rational_fwd, 
+    "rational forward (CUDA)");
 }

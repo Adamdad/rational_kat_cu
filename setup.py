@@ -1,6 +1,6 @@
 import glob
 from setuptools import setup
-from torch.utils.cpp_extension import BuildExtension, CppExtension
+from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 
 
 
@@ -15,7 +15,11 @@ setup(
     description='A test project',
     long_description='',
     ext_modules=[
-        CppExtension('my_lib', sources)
+        CUDAExtension(name='my_lib', 
+                      sources=sources,
+                      extra_compile_args={'cxx': ['-2'],
+                                          'nvcc': ['-2']}
+                      )
     ],
     cmdclass={'build_ext': BuildExtension}
 )
