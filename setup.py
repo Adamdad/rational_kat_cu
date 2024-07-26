@@ -1,6 +1,6 @@
 import glob
 from setuptools import setup
-from torch.utils.cpp_extension import BuildExtension, CPPExtension
+from torch.utils.cpp_extension import BuildExtension, CppExtension
 
 
 
@@ -14,7 +14,7 @@ setup(
     author_email='yxy_adadm@qq.com',
     description='A test project',
     ext_modules=[
-        CPPExtension('my_lib', sources)
+        CppExtension('my_lib', sources)
     ],
     cmdclass={'build_ext': BuildExtension}
 )
