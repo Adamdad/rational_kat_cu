@@ -35,7 +35,7 @@ __global__ void rational_fwd_cuda_kernel(
         index += blockDim.x * gridDim.x){
 
         scalar_t xp1 = x[index];
-        scalar_t axp1 = abs(xp1);
+        scalar_t abs_xp1 = abs(xp1);
 
         // Horner's method for polynomial computation for P
         scalar_t P = a_5;
