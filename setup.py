@@ -16,9 +16,7 @@ setup(
     long_description='',
     ext_modules=[
         CUDAExtension(name='my_lib', 
-                      sources=sources,
-                      extra_compile_args={'cxx': ['-2'],
-                                          'nvcc': ['-2']}
+                      sources=sources
                       )
     ],
     cmdclass={'build_ext': BuildExtension}
