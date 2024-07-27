@@ -65,7 +65,7 @@ if __name__=="__main__":
     denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda')
 
     # Input tensor
-    x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+    x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32, device='cuda')
 
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
