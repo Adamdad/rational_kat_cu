@@ -1,6 +1,7 @@
 import torch
 import my_lib
 from rational.torch import Rational
+from torch import nn
 
 def _get_xps(z, len_numerator, len_denominator):
     """
@@ -139,8 +140,8 @@ def benchmark_time(x, numerator_weights, denominator_weights):
     return result
 if __name__=="__main__":
     # Define tensors for the numerator and denominator coefficients
-    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda', requires_grad=True)
-    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda', requires_grad=True)
+    numerator_weights = nn.Parameter(torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda'), requires_grad=True)
+    denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
     x = torch.rand(100, 100, dtype=torch.float32, device='cuda')
