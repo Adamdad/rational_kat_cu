@@ -58,24 +58,38 @@ def Rational_CUDA_A_F(x, weight_numerator, weight_denominator):
 
     return numerator.div(denominator).view(x.shape)  # Reshape result to match input shape
 
-if __name__=="__main__":
-    degree = (5, 4)
-    # Define tensors for the numerator and denominator coefficients
-    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda')
-    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda')
-
-    # Input tensor
-    x = torch.randn(10000, 10000, dtype=torch.float32, device='cuda')
-
+def test_forward(x, numerator_weights, denominator_weights):
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
     my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
-    
+
     # Check if the results match
     assert torch.allclose(result, my_results)
+
+    return result
+
+def test_backward(x, numerator_weights, denominator_weights):
+    # Perform the rational function computation
+    result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+    result.sum().backward()
+    torch_grad = x.grad
     
-    # Benchmark speed
+    x.zero_grad()
+    numerator_weights.zero_grad()
+    denominator_weights.zero_grad()
+
+    my_results = my_lib.rational_bwd(x, numerator_weights, denominator_weights)
+    my_results.sum().backward()
+    
+    my_grad = x.grad
+
+    # Check if the results match
+    assert torch.allclose(x.grad, my_results.grad)
+
+    return result
+
+def benchmark_time(x, numerator_weights, denominator_weights):
     import time
     used_time = 0
     for _ in range(100):
@@ -83,16 +97,27 @@ if __name__=="__main__":
         result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
         torch.cuda.synchronize()
         used_time += time.time() - start
-    
+
     used_time /= 100
     print("Time taken by Rational_CUDA_A_F:", used_time)
-        
+
     used_time = 0
     for _ in range(100):
         start = time.time()
         my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
         torch.cuda.synchronize()
         used_time += time.time() - start
-        
+
     used_time /= 100
     print("Time taken by my_lib.rational_fwd:", used_time)
+
+    return result
+if __name__=="__main__":
+    # Define tensors for the numerator and denominator coefficients
+    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda').requires_grad_()
+    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda').requires_grad_()
+
+    # Input tensor
+    x = torch.randn(10000, 10000, dtype=torch.float32, device='cuda').requires_grad_()
+
+    test_backward(x, numerator_weights, denominator_weights)
