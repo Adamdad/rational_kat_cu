@@ -11,6 +11,16 @@ torch::Tensor rational_fwd(
   return rational_fwd_cuda(x, n, d);
 }
 
+torch::Tensor rational_fwd_optimized(
+  torch::Tensor x, 
+  torch::Tensor n, 
+  torch::Tensor d) {
+  CHECK_INPUT(x);
+  CHECK_INPUT(n);
+  CHECK_INPUT(d);
+  return rational_fwd_cuda_optimized(x, n, d);
+}
+
 std::vector<torch::Tensor> rational_bwd(
   torch::Tensor grad_output, 
   torch::Tensor x, 

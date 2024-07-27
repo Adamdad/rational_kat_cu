@@ -56,6 +56,48 @@ __global__ void rational_fwd_cuda_kernel(
     }
 }
 
+template <typename scalar_t>
+__global__ void rational_fwd_cuda_kernel_optimized(
+    const scalar_t* __restrict__ x, 
+    const scalar_t* __restrict__ a,
+    const scalar_t* __restrict__ b, 
+    scalar_t* __restrict__ result, 
+    size_t x_size) {
+
+    // Use shared memory for coefficients
+    __shared__ scalar_t s_a[6];
+    __shared__ scalar_t s_ab[4];
+
+    if (threadIdx.x < 6) {
+        s_a[threadIdx.x] = a[threadIdx.x];
+        if (threadIdx.x < 4) {
+            s_ab[threadIdx.x] = abs(b[threadIdx.x]);
+        }
+    }
+    __syncthreads();
+
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < x_size) {
+        scalar_t xp1 = x[index];
+        scalar_t abs_xp1 = abs(xp1);
+
+        // Horner's method for polynomial computation for P using shared memory
+        scalar_t P = s_a[5];
+        for (int i = 4; i >= 0; --i) {
+            P = fmaf(P, xp1, s_a[i]);  // using FMA
+        }
+        
+        // Horner's method for polynomial computation for Q using shared memory
+        scalar_t Q = s_ab[3];
+        for (int i = 2; i >= 0; --i) {
+            Q = fmaf(Q, abs_xp1, s_ab[i]);  // using FMA
+        }
+        Q = fmaf(Q, abs_xp1, 1.0);
+
+        result[index] = P / Q;
+    }
+}
+
 torch::Tensor rational_fwd_cuda(
     torch::Tensor x, 
     torch::Tensor n, 
@@ -68,6 +110,29 @@ torch::Tensor rational_fwd_cuda(
 
     AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda", ([&] {
     rational_fwd_cuda_kernel<scalar_t>
+        <<<numBlocks, blockSize>>>(
+            x.data_ptr<scalar_t>(),
+            n.data_ptr<scalar_t>(),
+            d.data_ptr<scalar_t>(),
+            result.data_ptr<scalar_t>(),
+            x_size);
+        }));
+
+    return result;
+}
+
+torch::Tensor rational_fwd_cuda_optimized(
+    torch::Tensor x, 
+    torch::Tensor n, 
+    torch::Tensor d
+    ){
+    auto result = at::empty_like(x);
+    const auto x_size = x.numel();
+    int blockSize = 512;  // You might want to experiment with this value
+    int numBlocks = (x_size + blockSize - 1) / blockSize;
+
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_optimized", ([&] {
+    rational_fwd_cuda_kernel_optimized<scalar_t>
         <<<numBlocks, blockSize>>>(
             x.data_ptr<scalar_t>(),
             n.data_ptr<scalar_t>(),
