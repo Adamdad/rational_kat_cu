@@ -158,6 +158,24 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     start = time.time()
     for _ in range(100):
+        my_output = My_rational.apply(x, numerator_weights, denominator_weights)
+        loss = loss_fn(expected_output, my_output)
+        loss.backward()
+        torch.cuda.synchronize()
+        
+        numerator_weights.grad.detach_()
+        numerator_weights.grad.zero_()
+        denominator_weights.grad.detach_()
+        denominator_weights.grad.zero_()
+    used_time += time.time() - start
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    used_time /= 100
+    print("Time taken by my_lib.rational_bwd:", used_time, "Peak memory:", peak_mem)
+    
+    used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    start = time.time()
+    for _ in range(100):
         my_output = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
         loss = loss_fn(expected_output, my_output)
         loss.backward()
@@ -173,23 +191,6 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     used_time /= 100
     print("Time taken by my_lib.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
     
-    used_time = 0
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    start = time.time()
-    for _ in range(100):
-        my_output = My_rational.apply(x, numerator_weights, denominator_weights)
-        loss = loss_fn(expected_output, my_output)
-        loss.backward()
-        torch.cuda.synchronize()
-        
-        numerator_weights.grad.detach_()
-        numerator_weights.grad.zero_()
-        denominator_weights.grad.detach_()
-        denominator_weights.grad.zero_()
-    used_time += time.time() - start
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
-    used_time /= 100
-    print("Time taken by my_lib.rational_bwd:", used_time, "Peak memory:", peak_mem)
     
 
 def benchmark_time(x, numerator_weights, denominator_weights):
