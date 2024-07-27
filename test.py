@@ -88,13 +88,13 @@ def test_forward(x, numerator_weights, denominator_weights):
 
 def test_backward(x, numerator_weights, denominator_weights):
     # Perform the rational function computation
-    # result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
-    # result.sum().backward()
-    # torch_grad = x.grad
+    result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+    result.sum().backward()
+    torch_grad = x.grad
     
-    # for p in [x, numerator_weights, denominator_weights]:
-    #     p.grad.detach_()
-    #     p.grad.zero_()
+    for p in [x, numerator_weights, denominator_weights]:
+        p.grad.detach_()
+        p.grad.zero_()
 
     my_results = My_rational.apply(x, numerator_weights, denominator_weights)
     my_results.sum().backward()
@@ -102,9 +102,9 @@ def test_backward(x, numerator_weights, denominator_weights):
     my_grad = x.grad
 
     # Check if the results match
-    # assert torch.allclose(torch_grad, my_grad)
+    assert torch.allclose(torch_grad, my_grad)
 
-    # return result
+    return result
 
 def benchmark_time(x, numerator_weights, denominator_weights):
     import time
@@ -136,5 +136,5 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.randn(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
-    test_forward(x, numerator_weights, denominator_weights)
-    # test_backward(x, numerator_weights, denominator_weights)
+    # test_forward(x, numerator_weights, denominator_weights)
+    test_backward(x, numerator_weights, denominator_weights)
