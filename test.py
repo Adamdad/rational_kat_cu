@@ -143,10 +143,10 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         # loss = loss_fn(expected_output, output)
         # loss.backward()
         torch.cuda.synchronize()
-        numerator_weights.grad.detach_()
-        numerator_weights.grad.zero_()
-        denominator_weights.grad.detach_()
-        denominator_weights.grad.zero_()
+        # numerator_weights.grad.detach_()
+        # numerator_weights.grad.zero_()
+        # denominator_weights.grad.detach_()
+        # denominator_weights.grad.zero_()
         
     used_time += time.time() - start
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
@@ -163,10 +163,10 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         # loss.backward()
         torch.cuda.synchronize()
         
-        numerator_weights.grad.detach_()
-        numerator_weights.grad.zero_()
-        denominator_weights.grad.detach_()
-        denominator_weights.grad.zero_()
+        # numerator_weights.grad.detach_()
+        # numerator_weights.grad.zero_()
+        # denominator_weights.grad.detach_()
+        # denominator_weights.grad.zero_()
     used_time += time.time() - start
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     used_time /= 100
@@ -180,10 +180,10 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         # loss = loss_fn(expected_output, my_output)
         # loss.backward()
         torch.cuda.synchronize()
-        numerator_weights.grad.detach_()
-        numerator_weights.grad.zero_()
-        denominator_weights.grad.detach_()
-        denominator_weights.grad.zero_()
+        # numerator_weights.grad.detach_()
+        # numerator_weights.grad.zero_()
+        # denominator_weights.grad.detach_()
+        # denominator_weights.grad.zero_()
         
     used_time += time.time() - start
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
