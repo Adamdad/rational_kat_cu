@@ -285,13 +285,76 @@ __global__ void rational_bwd_cuda_kernel(
             }
 }
 
+template <typename scalar_t>
+__global__ void rational_bwd_cuda_kernel_optimized(
+    const scalar_t* __restrict__ grad_output,
+    const scalar_t* __restrict__ x,
+    const scalar_t* __restrict__ a,
+    const scalar_t* __restrict__ b,
+    scalar_t* __restrict__ d_x,
+    double* __restrict__ d_a,
+    double* __restrict__ d_b,
+    size_t x_size) {
+    
+    __shared__ double sda[6];
+    __shared__ double sdb[4];
+
+    double local_da[6] = {0}; // Local accumulation arrays
+    double local_db[4] = {0};
+
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < x_size) {
+        scalar_t xp = x[index];
+        scalar_t axp = abs(xp);
+        scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
+        scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
+
+        scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
+        scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
+        scalar_t Q_inv = 1.0 / Q;
+        scalar_t Q_inv2 = Q_inv * Q_inv;
+
+        scalar_t grad_o = grad_output[index];
+        scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
+        scalar_t S = copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp_powers[0] + 3.0 * abs(b[2]) * axp_powers[1] + 4.0 * abs(b[3]) * axp_powers[2]);
+
+        scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
+        d_x[index] = d_i_x;
+
+        for (int i = 0; i < 6; ++i) {
+            local_da[i] += xp_powers[i] * Q_inv * grad_o;
+        }
+        for (int i = 0; i < 4; ++i) {
+            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
+        }
+    }
+
+    // Reduce local arrays to shared memory
+    for (int i = 0; i < 6; ++i) {
+        atomicAdd(&sda[i], local_da[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        atomicAdd(&sdb[i], local_db[i]);
+    }
+
+    __syncthreads();
+
+    // Only one thread writes back to global memory
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < 6; ++i) {
+            atomicAdd(&d_a[i], sda[i]);
+        }
+        for (int i = 0; i < 4; ++i) {
+            atomicAdd(&d_b[i], sdb[i]);
+        }
+    }
+}
+
 std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d){
     const auto x_size = x.numel();
     auto d_x = at::empty_like(x);
-    // auto d_n = at::zeros_like(n).toType(at::kDouble);
-    // auto d_d = at::zeros_like(d).toType(at::kDouble);
-    auto d_n = at::zeros_like(n).toType(at::kFloat);
-    auto d_d = at::zeros_like(d).toType(at::kFloat);
+    auto d_n = at::zeros_like(n).toType(at::kDouble);
+    auto d_d = at::zeros_like(d).toType(at::kDouble);
 
     int blockSize = 512;  // You might want to experiment with this value
     int numBlocks = (x_size + blockSize - 1) / blockSize;
@@ -309,6 +372,30 @@ std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::T
             x_size);
     }));
 
-    // return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
-    return {d_x, d_n, d_d};
+    return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
+}
+
+std::vector<torch::Tensor> rational_bwd_cuda_optimized(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d){
+    const auto x_size = x.numel();
+    auto d_x = at::empty_like(x);
+    auto d_n = at::zeros_like(n).toType(at::kDouble);
+    auto d_d = at::zeros_like(d).toType(at::kDouble);
+
+    int blockSize = 512;  // You might want to experiment with this value
+    int numBlocks = (x_size + blockSize - 1) / blockSize;
+
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda_optimized", ([&] {
+    rational_bwd_cuda_kernel_optimized<scalar_t>
+        <<<numBlocks, blockSize>>>(
+            grad_output.data_ptr<scalar_t>(),
+            x.data_ptr<scalar_t>(),
+            n.data_ptr<scalar_t>(),
+            d.data_ptr<scalar_t>(),
+            d_x.data_ptr<scalar_t>(),
+            d_n.data_ptr<double>(),
+            d_d.data_ptr<double>(),
+            x_size);
+    }));
+
+    return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
 }

@@ -73,6 +73,19 @@ class My_rational(torch.autograd.Function):
         d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
+class My_rational_optimized(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, weight_numerator, weight_denominator):
+        ctx.save_for_backward(input, weight_numerator, weight_denominator)
+        x = my_lib.rational_fwd(input, weight_numerator, weight_denominator)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, w_numerator, w_denominator = ctx.saved_tensors
+        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd_optimized(grad_output, x, w_numerator, w_denominator)
+        return d_x, d_weight_numerator, d_weight_denominator, None
+
 def test_forward(x, numerator_weights, denominator_weights):
     
     print("Testing forward pass")
@@ -104,7 +117,7 @@ def test_backward(x, numerator_weights, denominator_weights):
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
     
-    my_output = My_rational.apply(x, numerator_weights, denominator_weights)
+    my_output = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = numerator_weights.grad
