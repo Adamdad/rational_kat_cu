@@ -157,5 +157,6 @@ if __name__=="__main__":
         
     loss.backward()
     print(x.grad)
-    print(numerator_weights.grad)
+    print(rat.numerator.grad)
+    print(rat.denominator.grad)
     
