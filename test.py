@@ -67,6 +67,9 @@ class My_rational(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        if not grad_output.is_contiguous():  # TODO this check is necessary if efficientnet is used
+            print("grad_output is not contiguous")
+            grad_output = grad_output.contiguous()
         x, w_numerator, w_denominator = ctx.saved_tensors
         print(grad_output.shape, grad_output.dtype)
         d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
@@ -88,6 +91,7 @@ def test_backward(x, numerator_weights, denominator_weights):
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
     result.sum().backward()
     torch_grad = x.grad
+    print(torch_grad)
     
     for p in [x, numerator_weights, denominator_weights]:
         p.grad.detach_()
