@@ -386,24 +386,35 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         axp_powers[2] = axp * axp_powers[1]; // axp^3
         axp_powers[3] = axp * axp_powers[2]; // axp^4
 
+        // Compute absolute values once
+        scalar_t b0_abs = abs(b[0]);
+        scalar_t b1_abs = abs(b[1]);
+        scalar_t b2_abs = abs(b[2]);
+        scalar_t b3_abs = abs(b[3]);
+
         scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
-        scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
+        scalar_t Q = 1.0 + b0_abs * axp_powers[0] + b1_abs * axp_powers[1] + b2_abs * axp_powers[2] + b3_abs * axp_powers[3];
         scalar_t Q_inv = 1.0 / Q;
         scalar_t Q_inv2 = Q_inv * Q_inv;
 
         scalar_t grad_o = grad_output[index];
         scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
-        scalar_t S = copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp_powers[0] + 3.0 * abs(b[2]) * axp_powers[1] + 4.0 * abs(b[3]) * axp_powers[2]);
+        scalar_t S = copysign(1.0, xp) * (b0_abs + 2.0 * b1_abs * axp_powers[0] + 3.0 * b2_abs * axp_powers[1] + 4.0 * b3_abs * axp_powers[2]);
 
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
 
-        for (int i = 0; i < 6; ++i) {
-            local_da[i] += xp_powers[i] * Q_inv * grad_o;
-        }
-        for (int i = 0; i < 4; ++i) {
-            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
-        }
+        local_da[0] += grad_o * Q_inv;
+        local_da[1] += xp * grad_o * Q_inv;
+        local_da[2] += xp2 * grad_o * Q_inv;
+        local_da[3] += xp3 * grad_o * Q_inv;
+        local_da[4] += xp4 * grad_o * Q_inv;
+        local_da[5] += xp5 * grad_o * Q_inv;
+
+        local_db[0] += (-P * Q_inv2) * grad_o * copysign(1.0, b[0]) * axp;
+        local_db[1] += (-P * Q_inv2) * grad_o * copysign(1.0, b[1]) * axp2;
+        local_db[2] += (-P * Q_inv2) * grad_o * copysign(1.0, b[2]) * axp3;
+        local_db[3] += (-P * Q_inv2) * grad_o * copysign(1.0, b[3]) * axp4;
     }
 
     // Reduce local arrays to shared memory
