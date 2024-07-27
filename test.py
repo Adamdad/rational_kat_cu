@@ -68,6 +68,7 @@ class My_rational(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         x, w_numerator, w_denominator = ctx.saved_tensors
+        print(grad_output.shape, grad_output.dtype)
         d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
