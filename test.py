@@ -193,7 +193,7 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     
     
 
-def benchmark_time(x, numerator_weights, denominator_weights):
+def benchmark_fwd_time(x, numerator_weights, denominator_weights):
     import time
     used_time = 0
     for _ in range(100):
@@ -214,6 +214,16 @@ def benchmark_time(x, numerator_weights, denominator_weights):
 
     used_time /= 100
     print("Time taken by my_lib.rational_fwd:", used_time)
+    
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        my_results = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+
+    used_time /= 100
+    print("Time taken by my_lib.rational_fwd_optimized:", used_time)
     
     
 
@@ -240,5 +250,6 @@ if __name__=="__main__":
     # print(x.grad)
     # print(rat.numerator.grad)
     # print(rat.denominator.grad)
-    benchmark_bwd_time(x, numerator_weights, denominator_weights)
+    # benchmark_bwd_time(x, numerator_weights, denominator_weights)
+    benchmark_fwd_time(x, numerator_weights, denominator_weights)
     
