@@ -145,6 +145,10 @@ if __name__=="__main__":
 
     # test_backward(x, numerator_weights, denominator_weights)
     rat = Rational(cuda=True)
-    out = rat(x)
-    out.sum().backward()
-    print(x.grad)
+    output = rat(x)
+    
+    expected_output = torch.sigmoid(x)
+    loss_fn = torch.nn.MSELoss(reduction='sum')
+    loss = loss_fn(expected_output, output)
+    
+    loss.backward()
