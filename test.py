@@ -250,7 +250,7 @@ if __name__=="__main__":
     # print(x.grad)
     # print(rat.numerator.grad)
     # print(rat.denominator.grad)
-    # benchmark_bwd_time(x, numerator_weights, denominator_weights)
+    benchmark_bwd_time(x, numerator_weights, denominator_weights)
     # test_forward(x, numerator_weights, denominator_weights)
     # benchmark_fwd_time(x, numerator_weights, denominator_weights)
     
