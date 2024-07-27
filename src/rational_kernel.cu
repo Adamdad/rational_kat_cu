@@ -371,8 +371,20 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     if (index < x_size) {
         scalar_t xp = x[index];
         scalar_t axp = abs(xp);
-        scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
-        scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
+        // Compute powers of xp
+        scalar_t xp_powers[5];
+        xp_powers[0] = xp;
+        xp_powers[1] = xp * xp_powers[0]; // xp^2
+        xp_powers[2] = xp * xp_powers[1]; // xp^3
+        xp_powers[3] = xp * xp_powers[2]; // xp^4
+        xp_powers[4] = xp * xp_powers[3]; // xp^5
+
+        // Compute powers of axp
+        scalar_t axp_powers[4];
+        axp_powers[0] = axp;
+        axp_powers[1] = axp * axp_powers[0]; // axp^2
+        axp_powers[2] = axp * axp_powers[1]; // axp^3
+        axp_powers[3] = axp * axp_powers[2]; // axp^4
 
         scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
         scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
