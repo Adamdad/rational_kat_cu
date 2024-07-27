@@ -52,4 +52,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     "rational backward (CUDA)");
   m.def("rational_bwd_optimized", &rational_bwd_optimized,
     "rational backward optimized (CUDA)");
+  m.def("rational_fwd_optimized", &rational_fwd_optimized,
+    "rational forward optimized (CUDA)");
 }
