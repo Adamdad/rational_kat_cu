@@ -58,11 +58,24 @@ def Rational_CUDA_A_F(x, weight_numerator, weight_denominator):
 
     return numerator.div(denominator).view(x.shape)  # Reshape result to match input shape
 
+class My_rational(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, weight_numerator, weight_denominator):
+        ctx.save_for_backward(input, weight_numerator, weight_denominator)
+        my_lib.rational_fwd(input, weight_numerator, weight_denominator)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, w_numerator, w_denominator = ctx.saved_tensors
+        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
+        return d_x, d_weight_numerator, d_weight_denominator, None
+
 def test_forward(x, numerator_weights, denominator_weights):
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
-    my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
+    my_results = My_rational(x, numerator_weights, denominator_weights)
 
     # Check if the results match
     assert torch.allclose(result, my_results)
@@ -79,13 +92,13 @@ def test_backward(x, numerator_weights, denominator_weights):
     numerator_weights.zero_grad()
     denominator_weights.zero_grad()
 
-    my_results = my_lib.rational_bwd(x, numerator_weights, denominator_weights)
+    my_results = My_rational(x, numerator_weights, denominator_weights)
     my_results.sum().backward()
     
     my_grad = x.grad
 
     # Check if the results match
-    assert torch.allclose(x.grad, my_results.grad)
+    assert torch.allclose(torch_grad, my_grad)
 
     return result
 
