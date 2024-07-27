@@ -113,6 +113,9 @@ def test_backward(x, numerator_weights, denominator_weights):
     # Check if the results match
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradients do not match"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradients do not match"
+    
+    print("Backward pass test passed")
+    print("#"*50)
 
     # return result
 
