@@ -77,7 +77,7 @@ class My_rational_optimized(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, weight_numerator, weight_denominator):
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
-        x = my_lib.rational_fwd(input, weight_numerator, weight_denominator)
+        x = my_lib.rational_fwd_optimized(input, weight_numerator, weight_denominator)
         return x
 
     @staticmethod
