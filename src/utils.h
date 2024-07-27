@@ -9,12 +9,12 @@ torch::Tensor rational_fwd(
   torch::Tensor n, 
   torch::Tensor d);
 
-torch::Tensor rational_fwd_optimized(
+torch::Tensor rational_fwd_cuda(
   torch::Tensor x, 
   torch::Tensor n, 
   torch::Tensor d);
 
-torch::Tensor rational_fwd_cuda(
+torch::Tensor rational_fwd_optimized(
   torch::Tensor x, 
   torch::Tensor n, 
   torch::Tensor d);
@@ -36,14 +36,15 @@ std::vector<torch::Tensor> rational_bwd_cuda(
     torch::Tensor n, 
     torch::Tensor d);
 
+std::vector<torch::Tensor> rational_bwd_optimized(
+    torch::Tensor dy, 
+    torch::Tensor x, 
+    torch::Tensor n, 
+    torch::Tensor d);
+
 std::vector<torch::Tensor> rational_bwd_cuda_optimized(
     torch::Tensor dy, 
     torch::Tensor x, 
     torch::Tensor n, 
     torch::Tensor d);
 
-std::vector<torch::Tensor> rational_bwd_optimized(
-    torch::Tensor dy, 
-    torch::Tensor x, 
-    torch::Tensor n, 
-    torch::Tensor d);
