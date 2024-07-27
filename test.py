@@ -138,7 +138,7 @@ if __name__=="__main__":
     denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda', requires_grad=True)
 
     # Input tensor
-    x = torch.randn(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
+    x = torch.rand(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
     
     
     # test_forward(x, numerator_weights, denominator_weights)
