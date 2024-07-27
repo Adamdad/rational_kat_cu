@@ -292,11 +292,11 @@ std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::T
     auto d_d = at::zeros_like(d).toType(at::kDouble);
 
     int blockSize = 512;  // You might want to experiment with this value
-    // int numBlocks = 16;//(x_size + blockSize - 1) / blockSize;
+    int numBlocks = (x_size + blockSize - 1) / blockSize;
 
     AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda", ([&] {
     rational_bwd_cuda_kernel<scalar_t>
-        <<<16, blockSize>>>(
+        <<<numBlocks, blockSize>>>(
             grad_output.data_ptr<scalar_t>(),
             x.data_ptr<scalar_t>(),
             n.data_ptr<scalar_t>(),
