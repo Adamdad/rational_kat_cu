@@ -296,67 +296,80 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     double* __restrict__ d_b,
     size_t x_size) {
     
-    extern __shared__ char shared[];
-    double* sda = reinterpret_cast<double*>(shared);
-    double* sdb = reinterpret_cast<double*>(&sda[6]);
+    __shared__ double sda[6];
+    __shared__ double sdb[4];
 
-    if(threadIdx.x < 6) {
-        sda[threadIdx.x] = 0;
-    }
-    if(threadIdx.x < 4) {
-        sdb[threadIdx.x] = 0;
-    }
+    double local_da[6] = {0}; // Local accumulation arrays
+    double local_db[4] = {0};
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < x_size) {
         scalar_t xp = x[index];
         scalar_t axp = abs(xp);
-        scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
-        scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
+        // scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
+        // scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
 
-        scalar_t P = a[0];
-        scalar_t Q = 1.0;
-        scalar_t R = 0.0;
-        scalar_t S = 0.0;
-        for (int i = 0; i < 5; ++i) {
-            P += a[i+1] * xp_powers[i];
-            R += (i+2) * a[i+1] * xp_powers[i];
-            if (i < 4) {
-                Q += abs(b[i]) * axp_powers[i];
-                S += (i+2) * abs(b[i]) * axp_powers[i];
-            }
+        // scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
+        // scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
+        // scalar_t Q_inv = 1.0 / Q;
+        // scalar_t Q_inv2 = Q_inv * Q_inv;
+
+        // scalar_t grad_o = grad_output[index];
+        // scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
+        // scalar_t S = copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp_powers[0] + 3.0 * abs(b[2]) * axp_powers[1] + 4.0 * abs(b[3]) * axp_powers[2]);
+
+        // scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
+        // d_x[index] = d_i_x;
+
+
+        // Evaluate P using Horner's method
+        scalar_t P = a[5];
+        for (int i = 4; i >= 0; --i) {
+            P = P * xp + a[i];
         }
 
+        // Evaluate Q directly since it involves absolute values which don't lend themselves to Horner's
+        scalar_t Q = 1.0 + abs(b[0]) * axp + abs(b[1]) * axp * axp + abs(b[2]) * axp * axp * axp + abs(b[3]) * axp * axp * axp * axp;
         scalar_t Q_inv = 1.0 / Q;
         scalar_t Q_inv2 = Q_inv * Q_inv;
+
+        // Calculate R using a derivative-enhanced Horner's method
+        scalar_t R = a[5] * 5 * xp;
+        R = (R + a[4] * 4) * xp;
+        R = (R + a[3] * 3) * xp;
+        R = (R + a[2] * 2) * xp;
+        R = R + a[1];
+
         scalar_t grad_o = grad_output[index];
-        scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
+        scalar_t d_i_x = (R * Q_inv + copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp + 3.0 * abs(b[2]) * axp * axp + 4.0 * abs(b[3]) * axp * axp * axp) * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
 
-        double local_da[6] = {Q_inv * grad_o, 0};
-        double local_db[4] = {0};
-        for (int i = 1; i < 6; ++i) {
-            local_da[i] = xp_powers[i-1] * Q_inv * grad_o;
-        }
-        for (int i = 0; i < 4; ++i) {
-            local_db[i] = (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
-        }
-
         for (int i = 0; i < 6; ++i) {
-            atomicAdd(&sda[i], local_da[i]);
+            local_da[i] += xp_powers[i] * Q_inv * grad_o;
         }
         for (int i = 0; i < 4; ++i) {
-            atomicAdd(&sdb[i], local_db[i]);
+            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
         }
+    }
+
+    // Reduce local arrays to shared memory
+    for (int i = 0; i < 6; ++i) {
+        atomicAdd(&sda[i], local_da[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        atomicAdd(&sdb[i], local_db[i]);
     }
 
     __syncthreads();
 
-    if (threadIdx.x < 6) {
-        atomicAdd(&d_a[threadIdx.x], sda[threadIdx.x]);
-    }
-    if (threadIdx.x < 4) {
-        atomicAdd(&d_b[threadIdx.x], sdb[threadIdx.x]);
+    // Only one thread writes back to global memory
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < 6; ++i) {
+            atomicAdd(&d_a[i], sda[i]);
+        }
+        for (int i = 0; i < 4; ++i) {
+            atomicAdd(&d_b[i], sdb[i]);
+        }
     }
 }
 
