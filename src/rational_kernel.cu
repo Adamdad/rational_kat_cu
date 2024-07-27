@@ -178,34 +178,25 @@ __global__ void rational_bwd_cuda_kernel(
         scalar_t axp5 = abs(xp5);
         
         scalar_t P = a_0
-        
-        + a_1*xp1
-        
-        + a_2*xp2
-        
-        + a_3*xp3
-        
-        + a_4*xp4
-        
-        + a_5*xp5
-                ;
+                + a_1*xp1
+                + a_2*xp2
+                + a_3*xp3
+                + a_4*xp4
+                + a_5*xp5;
 
         scalar_t Q = scalar_t(1.0)
                 + ab_0 * axp1
                 + ab_1 * axp2
                 + ab_2 * axp3
-                + ab_3 * axp4
-                ;
+                + ab_3 * axp4;
 
         scalar_t R = a_1
                 + scalar_t(2.0) * a_2 * xp1
                 + scalar_t(3.0) * a_3 * xp2
                 + scalar_t(4.0) * a_4 * xp3
-                + scalar_t(5.0) * a_5 * xp4
-                ;
+                + scalar_t(5.0) * a_5 * xp4;
 
         scalar_t S = copysign( scalar_t(1.0), xp1 ) * (ab_0
-
                 + scalar_t(2.0) * ab_1 * axp1
                 + scalar_t(3.0) * ab_2 * axp2
                 + scalar_t(4.0) * ab_3 * axp3
@@ -301,7 +292,7 @@ std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::T
     auto d_d = at::zeros_like(d).toType(at::kDouble);
 
     int blockSize = 512;  // You might want to experiment with this value
-    int numBlocks = (x_size + blockSize - 1) / blockSize;
+    int numBlocks = 16;//(x_size + blockSize - 1) / blockSize;
 
     AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda", ([&] {
     rational_bwd_cuda_kernel<scalar_t>
