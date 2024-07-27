@@ -134,7 +134,9 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     import time
     expected_output = torch.sigmoid(x)
     loss_fn = torch.nn.MSELoss(reduction='sum')
+    
     used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
         output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
@@ -142,11 +144,14 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         loss.backward()
         torch.cuda.synchronize()
         used_time += time.time() - start
+        
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     
     used_time /= 100
-    print("Time taken by Rational_CUDA_A_F:", used_time)
+    print("Time taken by Rational_CUDA_A_F:", used_time, "Peak memory:", peak_mem)
     
     used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
         my_output = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
@@ -154,11 +159,13 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         loss.backward()
         torch.cuda.synchronize()
         used_time += time.time() - start
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
         
     used_time /= 100
-    print("Time taken by my_lib.rational_bwd_optimized:", used_time)
+    print("Time taken by my_lib.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
     
     used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
         my_output = My_rational.apply(x, numerator_weights, denominator_weights)
@@ -166,9 +173,9 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
         loss.backward()
         torch.cuda.synchronize()
         used_time += time.time() - start
-    
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     used_time /= 100
-    print("Time taken by my_lib.rational_bwd:", used_time)
+    print("Time taken by my_lib.rational_bwd:", used_time, "Peak memory:", peak_mem)
     
 
 def benchmark_time(x, numerator_weights, denominator_weights):
