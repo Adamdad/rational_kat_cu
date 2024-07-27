@@ -11,7 +11,7 @@ torch::Tensor rational_fwd(
   return rational_fwd_cuda(x, n, d);
 }
 
-torch::Tensor rational_bwd(
+std::vector<torch::Tensor> rational_bwd(
   torch::Tensor grad_output, 
   torch::Tensor x, 
   torch::Tensor n, 

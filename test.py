@@ -130,7 +130,7 @@ def benchmark_time(x, numerator_weights, denominator_weights):
     used_time = 0
     for _ in range(100):
         start = time.time()
-        my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
+        my_results = My_rational.apply(x, numerator_weights, denominator_weights)
         torch.cuda.synchronize()
         used_time += time.time() - start
 
