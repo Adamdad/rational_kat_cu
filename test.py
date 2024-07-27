@@ -149,15 +149,15 @@ if __name__=="__main__":
     
     # test_forward(x, numerator_weights, denominator_weights)
 
-    # test_backward(x, numerator_weights, denominator_weights)
-    rat = Rational(cuda=True)
-    expected_output = torch.sigmoid(x)
-    loss_fn = torch.nn.MSELoss(reduction='sum')
-    output = rat(x)
-    loss = loss_fn(expected_output, output)
+    test_backward(x, numerator_weights, denominator_weights)
+    # rat = Rational(cuda=True)
+    # expected_output = torch.sigmoid(x)
+    # loss_fn = torch.nn.MSELoss(reduction='sum')
+    # output = rat(x)
+    # loss = loss_fn(expected_output, output)
         
-    loss.backward()
-    print(x.grad)
-    print(rat.numerator.grad)
-    print(rat.denominator.grad)
+    # loss.backward()
+    # print(x.grad)
+    # print(rat.numerator.grad)
+    # print(rat.denominator.grad)
     
