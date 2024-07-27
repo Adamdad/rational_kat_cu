@@ -97,6 +97,9 @@ def test_backward(x, numerator_weights, denominator_weights):
         p.grad.zero_()
 
     my_results = My_rational.apply(x, numerator_weights, denominator_weights)
+    
+    assert torch.allclose(result, my_results)
+    
     my_results.sum().backward()
     
     my_grad = x.grad
