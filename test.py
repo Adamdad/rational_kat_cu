@@ -92,7 +92,7 @@ def test_forward(x, numerator_weights, denominator_weights):
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
-    my_results = My_rational.apply(x, numerator_weights, denominator_weights)
+    my_results = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
 
     # Check if the results match
     assert torch.allclose(result, my_results)
@@ -251,5 +251,6 @@ if __name__=="__main__":
     # print(rat.numerator.grad)
     # print(rat.denominator.grad)
     # benchmark_bwd_time(x, numerator_weights, denominator_weights)
-    benchmark_fwd_time(x, numerator_weights, denominator_weights)
+    test_forward(x, numerator_weights, denominator_weights)
+    # benchmark_fwd_time(x, numerator_weights, denominator_weights)
     
