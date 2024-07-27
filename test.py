@@ -91,7 +91,6 @@ def test_backward(x, numerator_weights, denominator_weights):
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
     result.sum().backward()
     torch_grad = x.grad
-    print(torch_grad)
     
     for p in [x, numerator_weights, denominator_weights]:
         p.grad.detach_()
@@ -132,10 +131,10 @@ def benchmark_time(x, numerator_weights, denominator_weights):
     return result
 if __name__=="__main__":
     # Define tensors for the numerator and denominator coefficients
-    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda').requires_grad_()
-    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda').requires_grad_()
+    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda', requires_grad=True)
+    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda', requires_grad=True)
 
     # Input tensor
-    x = torch.randn(10000, 10000, dtype=torch.float32, device='cuda').requires_grad_()
+    x = torch.randn(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
 
     test_backward(x, numerator_weights, denominator_weights)
