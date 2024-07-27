@@ -76,6 +76,8 @@ class My_rational(torch.autograd.Function):
         return d_x, d_weight_numerator, d_weight_denominator, None
 
 def test_forward(x, numerator_weights, denominator_weights):
+    
+    print("Testing forward pass")
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
@@ -83,10 +85,12 @@ def test_forward(x, numerator_weights, denominator_weights):
 
     # Check if the results match
     assert torch.allclose(result, my_results)
-
+    print("Forward pass test passed")
+    print("#"*50)
     return result
 
 def test_backward(x, numerator_weights, denominator_weights):
+    print("Testing backward pass")
     # Perform the rational function computation
     # result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
     # result.sum().backward()
@@ -133,5 +137,8 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.randn(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
-    # test_forward(x, numerator_weights, denominator_weights)
+    
+    
+    test_forward(x, numerator_weights, denominator_weights)
+
     test_backward(x, numerator_weights, denominator_weights)
