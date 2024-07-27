@@ -105,7 +105,7 @@ def test_backward(x, numerator_weights, denominator_weights):
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad = x.grad
-    
+    print("My_grad:", my_grad)
     
     # my_grad = x.grad
 
