@@ -61,8 +61,8 @@ def Rational_CUDA_A_F(x, weight_numerator, weight_denominator):
 if __name__=="__main__":
     degree = (5, 4)
     # Define tensors for the numerator and denominator coefficients
-    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32)
-    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32)
+    numerator_weights = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda')
+    denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda')
 
     # Input tensor
     x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
@@ -72,3 +72,6 @@ if __name__=="__main__":
 
     # Print the result
     print("Result of Rational_CUDA_A_F:", result)
+
+    my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
+    print("Result of my_lib.rational_fwd:", my_results)
