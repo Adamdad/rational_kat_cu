@@ -92,15 +92,24 @@ def test_forward(x, numerator_weights, denominator_weights):
 
 def test_backward(x, numerator_weights, denominator_weights):
     print("Testing backward pass")
-    # Perform the rational function computation
-    # result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
-    # result.sum().backward()
-    # torch_grad = x.grad
+    
+    expected_output = torch.sigmoid(x).detach()
+    loss_fn = torch.nn.MSELoss(reduction='sum')
 
-    my_results = My_rational.apply(x, numerator_weights, denominator_weights)
-    out = my_results.sum()
-    print(out)
-    out.backward()
+    
+    # Perform the rational function computation
+    # output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+    # loss = loss_fn(expected_output, output)
+    # loss.backward()
+    # torch_grad = x.grad
+    
+    
+
+    my_output = My_rational.apply(x, numerator_weights, denominator_weights)
+    loss = loss_fn(expected_output, my_output)
+    loss.backward()
+    my_grad = x.grad
+    
     
     # my_grad = x.grad
 
@@ -143,12 +152,4 @@ if __name__=="__main__":
     
     # test_forward(x, numerator_weights, denominator_weights)
 
-    # test_backward(x, numerator_weights, denominator_weights)
-    rat = Rational(cuda=True)
-    output = rat(x)
-    
-    expected_output = torch.sigmoid(x)
-    loss_fn = torch.nn.MSELoss(reduction='sum')
-    loss = loss_fn(expected_output, output)
-    
-    loss.backward()
+    test_backward(x, numerator_weights, denominator_weights)
