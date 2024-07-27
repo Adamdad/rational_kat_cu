@@ -1,5 +1,6 @@
 import torch
 import my_lib
+from rational.torch import Rational
 
 def _get_xps(z, len_numerator, len_denominator):
     """
@@ -142,4 +143,8 @@ if __name__=="__main__":
     
     # test_forward(x, numerator_weights, denominator_weights)
 
-    test_backward(x, numerator_weights, denominator_weights)
+    # test_backward(x, numerator_weights, denominator_weights)
+    rat = Rational(cuda=True)
+    out = rat(x)
+    out.sum().backward()
+    print(x.grad)
