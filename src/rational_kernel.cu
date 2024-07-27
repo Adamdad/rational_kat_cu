@@ -404,17 +404,12 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
 
-        local_da[0] += grad_o * Q_inv;
-        local_da[1] += xp * grad_o * Q_inv;
-        local_da[2] += xp2 * grad_o * Q_inv;
-        local_da[3] += xp3 * grad_o * Q_inv;
-        local_da[4] += xp4 * grad_o * Q_inv;
-        local_da[5] += xp5 * grad_o * Q_inv;
-
-        local_db[0] += (-P * Q_inv2) * grad_o * copysign(1.0, b[0]) * axp;
-        local_db[1] += (-P * Q_inv2) * grad_o * copysign(1.0, b[1]) * axp2;
-        local_db[2] += (-P * Q_inv2) * grad_o * copysign(1.0, b[2]) * axp3;
-        local_db[3] += (-P * Q_inv2) * grad_o * copysign(1.0, b[3]) * axp4;
+        for (int i = 0; i < 6; ++i) {
+            local_da[i] += xp_powers[i] * Q_inv * grad_o;
+        }
+        for (int i = 0; i < 4; ++i) {
+            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
+        }
     }
 
     // Reduce local arrays to shared memory
