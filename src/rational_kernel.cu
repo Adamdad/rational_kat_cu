@@ -361,111 +361,56 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     double* __restrict__ d_b,
     size_t x_size) {
     
-    // __shared__ double sda[6];
-    // __shared__ double sdb[4];
+    __shared__ double sda[6];
+    __shared__ double sdb[4];
 
-    // double local_da[6] = {0}; // Local accumulation arrays
-    // double local_db[4] = {0};
+    double local_da[6] = {0}; // Local accumulation arrays
+    double local_db[4] = {0};
 
-    // int index = blockIdx.x * blockDim.x + threadIdx.x;
-    // if (index < x_size) {
-    //     scalar_t xp = x[index];
-    //     scalar_t axp = abs(xp);
-    //     scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
-    //     scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
-
-    //     scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
-    //     scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
-    //     scalar_t Q_inv = 1.0 / Q;
-    //     scalar_t Q_inv2 = Q_inv * Q_inv;
-
-    //     scalar_t grad_o = grad_output[index];
-    //     scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
-    //     scalar_t S = copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp_powers[0] + 3.0 * abs(b[2]) * axp_powers[1] + 4.0 * abs(b[3]) * axp_powers[2]);
-
-    //     scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
-    //     d_x[index] = d_i_x;
-
-    //     for (int i = 0; i < 6; ++i) {
-    //         local_da[i] += xp_powers[i] * Q_inv * grad_o;
-    //     }
-    //     for (int i = 0; i < 4; ++i) {
-    //         local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
-    //     }
-    // }
-
-    // // Reduce local arrays to shared memory
-    // for (int i = 0; i < 6; ++i) {
-    //     atomicAdd(&sda[i], local_da[i]);
-    // }
-    // for (int i = 0; i < 4; ++i) {
-    //     atomicAdd(&sdb[i], local_db[i]);
-    // }
-
-    // __syncthreads();
-
-    // // Only one thread writes back to global memory
-    // if (threadIdx.x == 0) {
-    //     for (int i = 0; i < 6; ++i) {
-    //         atomicAdd(&d_a[i], sda[i]);
-    //     }
-    //     for (int i = 0; i < 4; ++i) {
-    //         atomicAdd(&d_b[i], sdb[i]);
-    //     }
-    // }
-
-    __shared__ scalar_t shared_a[6];  // Shared memory for coefficients 'a'
-    __shared__ scalar_t shared_b[4];  // Shared memory for absolute values of coefficients 'b'
-
-    int tid = threadIdx.x;
-    int idx = blockIdx.x * blockDim.x + tid;
-
-    if (tid < 6) {
-        shared_a[tid] = a[tid];  // Load 'a' into shared memory
-        if (tid < 4) {
-            shared_b[tid] = abs(b[tid]);  // Load 'b' and take absolute in shared memory
-        }
-    }
-    __syncthreads();  // Ensure all threads have loaded the coefficients
-
-    if (idx < x_size) {
-        scalar_t xp = x[idx];
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < x_size) {
+        scalar_t xp = x[index];
         scalar_t axp = abs(xp);
-        scalar_t xp2 = xp * xp;
-        scalar_t xp3 = xp2 * xp;
-        scalar_t xp4 = xp3 * xp;
-        scalar_t xp5 = xp4 * xp;
-        
-        scalar_t axp2 = axp * axp;
-        scalar_t axp3 = axp2 * axp;
-        scalar_t axp4 = axp3 * axp;
+        scalar_t xp_powers[5] = {xp, xp * xp, xp * xp * xp, xp * xp * xp * xp, xp * xp * xp * xp * xp};
+        scalar_t axp_powers[4] = {axp, axp * axp, axp * axp * axp, axp * axp * axp * axp};
 
-        // Horner's method for polynomial P
-        scalar_t P = shared_a[5] * xp5 + shared_a[4] * xp4 + shared_a[3] * xp3 + shared_a[2] * xp2 + shared_a[1] * xp + shared_a[0];
-        
-        // Direct computation for polynomial Q using precomputed powers
-        scalar_t Q = 1.0 + shared_b[0] * axp + shared_b[1] * axp2 + shared_b[2] * axp3 + shared_b[3] * axp4;
-        
+        scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
+        scalar_t Q = 1.0 + abs(b[0]) * axp_powers[0] + abs(b[1]) * axp_powers[1] + abs(b[2]) * axp_powers[2] + abs(b[3]) * axp_powers[3];
         scalar_t Q_inv = 1.0 / Q;
         scalar_t Q_inv2 = Q_inv * Q_inv;
-        
-        // Calculate derivatives R and S using precomputed powers
-        scalar_t R = shared_a[1] + 2 * shared_a[2] * xp + 3 * shared_a[3] * xp2 + 4 * shared_a[4] * xp3 + 5 * shared_a[5] * xp4;
-        scalar_t S = copysign(1.0, xp) * (shared_b[0] + 2 * shared_b[1] * axp + 3 * shared_b[2] * axp2 + 4 * shared_b[3] * axp3);
 
-        scalar_t grad_o = grad_output[idx];
+        scalar_t grad_o = grad_output[index];
+        scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
+        scalar_t S = copysign(1.0, xp) * (abs(b[0]) + 2.0 * abs(b[1]) * axp_powers[0] + 3.0 * abs(b[2]) * axp_powers[1] + 4.0 * abs(b[3]) * axp_powers[2]);
+
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
-        d_x[idx] = d_i_x;
-
-        // Compute gradient contributions for a and b
-        scalar_t grad_contrib_a[6] = {Q_inv, xp * Q_inv, xp2 * Q_inv, xp3 * Q_inv, xp4 * Q_inv, xp5 * Q_inv};
-        scalar_t grad_contrib_b[4] = {(-P * Q_inv2) * axp, (-P * Q_inv2) * axp2, (-P * Q_inv2) * axp3, (-P * Q_inv2) * axp4};
+        d_x[index] = d_i_x;
 
         for (int i = 0; i < 6; ++i) {
-            atomicAdd(&d_a[i], grad_contrib_a[i] * grad_o);
+            local_da[i] += xp_powers[i] * Q_inv * grad_o;
         }
         for (int i = 0; i < 4; ++i) {
-            atomicAdd(&d_b[i], grad_contrib_b[i] * grad_o);
+            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
+        }
+    }
+
+    // Reduce local arrays to shared memory
+    for (int i = 0; i < 6; ++i) {
+        atomicAdd(&sda[i], local_da[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        atomicAdd(&sdb[i], local_db[i]);
+    }
+
+    __syncthreads();
+
+    // Only one thread writes back to global memory
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < 6; ++i) {
+            atomicAdd(&d_a[i], sda[i]);
+        }
+        for (int i = 0; i < 4; ++i) {
+            atomicAdd(&d_b[i], sdb[i]);
         }
     }
 }
