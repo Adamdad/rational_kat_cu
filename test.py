@@ -106,7 +106,6 @@ def test_backward(x, numerator_weights, denominator_weights):
     expected_output = torch.sigmoid(x)
     loss_fn = torch.nn.MSELoss(reduction='sum')
 
-    
     # Perform the rational function computation
     output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, output)
@@ -131,6 +130,46 @@ def test_backward(x, numerator_weights, denominator_weights):
     print("#"*50)
 
     # return result
+def benchmark_bwd_time(x, numerator_weights, denominator_weights):
+    import time
+    expected_output = torch.sigmoid(x)
+    loss_fn = torch.nn.MSELoss(reduction='sum')
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+        loss = loss_fn(expected_output, output)
+        loss.backward()
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+    
+    used_time /= 100
+    print("Time taken by Rational_CUDA_A_F:", used_time)
+    
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        my_output = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
+        loss = loss_fn(expected_output, my_output)
+        loss.backward()
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+        
+    used_time /= 100
+    print("Time taken by my_lib.rational_bwd_optimized:", used_time)
+    
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        my_output = My_rational.apply(x, numerator_weights, denominator_weights)
+        loss = loss_fn(expected_output, my_output)
+        loss.backward()
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+    
+    used_time /= 100
+    print("Time taken by my_lib.rational_bwd:", used_time)
+    
 
 def benchmark_time(x, numerator_weights, denominator_weights):
     import time
@@ -153,6 +192,8 @@ def benchmark_time(x, numerator_weights, denominator_weights):
 
     used_time /= 100
     print("Time taken by my_lib.rational_fwd:", used_time)
+    
+    
 
     return result
 if __name__=="__main__":
@@ -161,12 +202,12 @@ if __name__=="__main__":
     denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
-    x = torch.rand(100, 100, dtype=torch.float32, device='cuda')
+    x = torch.rand(1000, 1000, dtype=torch.float32, device='cuda')
     
     
     # test_forward(x, numerator_weights, denominator_weights)
 
-    test_backward(x, numerator_weights, denominator_weights)
+    # test_backward(x, numerator_weights, denominator_weights)
     # rat = Rational(cuda=True)
     # expected_output = torch.sigmoid(x)
     # loss_fn = torch.nn.MSELoss(reduction='sum')
@@ -177,4 +218,5 @@ if __name__=="__main__":
     # print(x.grad)
     # print(rat.numerator.grad)
     # print(rat.denominator.grad)
+    benchmark_bwd_time(x, numerator_weights, denominator_weights)
     
