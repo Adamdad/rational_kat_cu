@@ -97,6 +97,9 @@ def test_backward(x, numerator_weights, denominator_weights):
     # torch_grad = x.grad
 
     my_results = My_rational.apply(x, numerator_weights, denominator_weights)
+    if not my_results.is_contiguous():  # TODO this check is necessary if efficientnet is used
+        print("my_results is not contiguous")
+        my_results = my_results.contiguous()
     
     my_results.sum().backward()
     
