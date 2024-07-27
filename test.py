@@ -65,13 +65,34 @@ if __name__=="__main__":
     denominator_weights = torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda')
 
     # Input tensor
-    x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32, device='cuda')
+    x = torch.randn(1000, 1000, dtype=torch.float32, device='cuda')
 
     # Perform the rational function computation
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
-    # Print the result
-    print("Result of Rational_CUDA_A_F:", result)
-
     my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
-    print("Result of my_lib.rational_fwd:", my_results)
+    
+    # Check if the results match
+    assert torch.allclose(result, my_results)
+    
+    # Benchmark speed
+    import time
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+    
+    used_time /= 100
+    print("Time taken by Rational_CUDA_A_F:", used_time)
+        
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        my_results = my_lib.rational_fwd(x, numerator_weights, denominator_weights)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+        
+    used_time /= 100
+    print("Time taken by my_lib.rational_fwd:", used_time)
