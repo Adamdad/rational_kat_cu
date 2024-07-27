@@ -95,23 +95,24 @@ def test_backward(x, numerator_weights, denominator_weights):
 
     
     # Perform the rational function computation
-    # output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
-    # loss = loss_fn(expected_output, output)
-    # loss.backward()
-    # torch_grad = x.grad
+    output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
+    loss = loss_fn(expected_output, output)
+    loss.backward()
+    torch_grad_n = numerator_weights.grad
+    torch_grad_d = denominator_weights.grad
     
+    numerator_weights.grad.zero_()
+    denominator_weights.grad.zero_()
     
-
     my_output = My_rational.apply(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
-    my_grad = numerator_weights.grad
-    print("My_grad:", my_grad)
-    
-    # my_grad = x.grad
+    my_grad_n = numerator_weights.grad
+    my_grad_d = denominator_weights.grad
 
-    # # Check if the results match
-    # assert torch.allclose(torch_grad, my_grad)
+    # Check if the results match
+    assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradients do not match"
+    assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradients do not match"
 
     # return result
 
