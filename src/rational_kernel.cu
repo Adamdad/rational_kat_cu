@@ -288,8 +288,10 @@ __global__ void rational_bwd_cuda_kernel(
 std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d){
     const auto x_size = x.numel();
     auto d_x = at::empty_like(x);
-    auto d_n = at::zeros_like(n).toType(at::kDouble);
-    auto d_d = at::zeros_like(d).toType(at::kDouble);
+    // auto d_n = at::zeros_like(n).toType(at::kDouble);
+    // auto d_d = at::zeros_like(d).toType(at::kDouble);
+    auto d_n = at::zeros_like(n).toType(at::kFloat);
+    auto d_d = at::zeros_like(d).toType(at::kFloat);
 
     int blockSize = 512;  // You might want to experiment with this value
     int numBlocks = (x_size + blockSize - 1) / blockSize;
@@ -307,5 +309,6 @@ std::vector<torch::Tensor> rational_bwd_cuda(torch::Tensor grad_output, torch::T
             x_size);
     }));
 
-    return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
+    // return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
+    return {d_x, d_n, d_d};
 }
