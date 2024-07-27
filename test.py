@@ -98,7 +98,7 @@ def test_backward(x, numerator_weights, denominator_weights):
 
     my_results = My_rational.apply(x, numerator_weights, denominator_weights)
     out = my_results.sum()
-    
+    print(out)
     out.backward()
     
     # my_grad = x.grad
