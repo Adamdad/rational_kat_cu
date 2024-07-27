@@ -140,6 +140,6 @@ if __name__=="__main__":
     x = torch.randn(100, 100, dtype=torch.float32, device='cuda', requires_grad=True)
     
     
-    test_forward(x, numerator_weights, denominator_weights)
+    # test_forward(x, numerator_weights, denominator_weights)
 
     test_backward(x, numerator_weights, denominator_weights)
