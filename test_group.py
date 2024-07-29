@@ -167,10 +167,10 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
 
     my_results = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
     print("My results shape:", my_results.shape)
-    print(my_results)
+    print(my_results[0])
     
     print("Vectorized results shape:", vector_result.shape)
-    print(vector_result)
+    print(vector_result[0])
     
     assert torch.allclose(vector_result[0], my_results[0]), "First element mismatch"
     assert torch.allclose(vector_result[:, 1], my_results[:,1]), "Second element mismatch"
