@@ -67,7 +67,7 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     int threads_per_block = 256;  // Adjust as needed based on device capabilities
     int num_blocks = (x_size + threads_per_block - 1) / threads_per_block;
 
-    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_1dgroup", ([&] {
+    AT_DISPATCH_FLOATING_TYPES_AND_HALF(x.scalar_type(), "rational_fwd_cuda_1dgroup", ([&] {
     rational_fwd_cuda_kernel_1dgroup<scalar_t>
         <<<num_blocks, threads_per_block>>>(
             x.data_ptr<scalar_t>(),
