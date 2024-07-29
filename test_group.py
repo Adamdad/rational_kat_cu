@@ -195,6 +195,34 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     print("Forward pass test passed")
     print("#"*50)
 
+def test_backward(x, numerator_weights, denominator_weights, group_size=4):
+    print("Testing backward pass")
+    expected_output = torch.sigmoid(x)
+    loss_fn = torch.nn.MSELoss(reduction='sum')
+
+    # Perform the rational function computation
+    output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    loss = loss_fn(expected_output, output)
+    loss.backward()
+    torch_grad_n = numerator_weights.grad
+    torch_grad_d = denominator_weights.grad
+    
+    numerator_weights.grad.zero_()
+    denominator_weights.grad.zero_()
+    
+    my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+    loss = loss_fn(expected_output, my_output)
+    loss.backward()
+    my_grad_n = numerator_weights.grad
+    my_grad_d = denominator_weights.grad
+    
+    print("Torch grad numerator:", torch_grad_n)
+    print("My grad numerator:", my_grad_n)
+    
+    assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
+    assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
+    
+    print("Backward pass test passed")
 
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
@@ -256,8 +284,9 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.rand(512, 77, 640, dtype=torch.float32, device='cuda')
-    test_forward(x, numerator_weights, denominator_weights, group_size)
-    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    # test_forward(x, numerator_weights, denominator_weights, group_size)
+    # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    test_backward(x, numerator_weights, denominator_weights, group_size)
     
     
     
