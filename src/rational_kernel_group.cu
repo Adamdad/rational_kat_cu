@@ -104,8 +104,8 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     const int d_size,
     int D_per_group) {
     
-    __shared__ double sda[n_size];
-    __shared__ double sdb[d_size];
+    __shared__ double sda[24];
+    __shared__ double sdb[16];
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
