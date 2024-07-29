@@ -72,8 +72,8 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     rational_fwd_cuda_kernel_1dgroup<scalar_t>
         <<<numBlocks, blockSize>>>(
             x.data_ptr<scalar_t>(),
-            a.data_ptr<scalar_t>(),
-            b.data_ptr<scalar_t>(),
+            n.data_ptr<scalar_t>(),
+            d.data_ptr<scalar_t>(),
             result.data_ptr<scalar_t>(),
             B, L, D, group);
         }));
