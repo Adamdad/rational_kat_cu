@@ -132,12 +132,13 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     int b_idx = g_index * 4;
 
     // Load coefficients into registers
-    scalar_t shared_a[6], shared_b_abs[4];
+    scalar_t shared_a[6], shared_b_abs[4], shared_b[4];;
     for (int i = 0; i < 6; ++i) {
         shared_a[i] = a[a_idx + i];
     }
     for (int i = 0; i < 4; ++i) {
         shared_b_abs[i] = abs(b[b_idx + i]);  // Store absolute values directly if needed
+        shared_b[i] = b[b_idx + i];
     }
 
     scalar_t local_da[6] = {0}; // Local accumulation arrays
