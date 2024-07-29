@@ -271,14 +271,8 @@ if __name__=="__main__":
     group_size = 4
     # Define tensors for the numerator and denominator coefficients
     # numerator of size (group_size, 5) and denominator of size (group_size, 4)
-    numerator_weights = nn.Parameter(torch.tensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.01], 
-                                                   [0.1, 0.2, 0.8, 0.4, 0.5, 0.01], 
-                                                   [0.1, 0.2, 0.7, 0.4, 0.3, 0.01], 
-                                                   [0.1, 0.2, 0.3, 0.4, 0.5, 0.01]], dtype=torch.float32, device='cuda'), requires_grad=True)
-    denominator_weights = nn.Parameter(torch.tensor([[1.0, 2.0, 3.0, 4.0], 
-                                                     [1.0, 9.0, 1.0, 7.0], 
-                                                     [1.0, 2.0, 1.0, 1.0], 
-                                                     [1.0, 2.0, 3.0, 4.0]], dtype=torch.float32, device='cuda'), requires_grad=True)
+    numerator_weights = nn.Parameter(torch.randn(4, 6, dtype=torch.float32, device='cuda'), requires_grad=True)
+    denominator_weights = nn.Parameter(torch.randn(4, 4, dtype=torch.float32, device='cuda'), requires_grad=True)
     # numerator_weights = nn.Parameter(torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda'), requires_grad=True)
     # denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
