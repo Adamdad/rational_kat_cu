@@ -70,9 +70,9 @@ __global__ void rational_fwd_cuda_kernel_optimized(
 
     if (threadIdx.x < 6) {
         s_a[threadIdx.x] = a[threadIdx.x];
-        if (threadIdx.x < 4) {
-            s_ab[threadIdx.x] = abs(b[threadIdx.x]);
-        }
+    }
+    if (threadIdx.x < 4) {
+        s_ab[threadIdx.x] = abs(b[threadIdx.x]);
     }
     __syncthreads();
 
