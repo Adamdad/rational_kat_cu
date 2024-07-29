@@ -203,7 +203,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     start_time = time.time()
 
     for _ in range(100):
-        with torch.cuda.amp.autocast(dtype=torch.float16):  # Automatic mixed precision context
+        with torch.cuda.amp.autocast(dtype=torch.float32):  # Automatic mixed precision context
             output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
             loss = loss_fn(expected_output, output)
 
