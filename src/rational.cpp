@@ -48,8 +48,9 @@ std::vector<torch::Tensor> rational_bwd_optimized(
 torch::Tensor rational_fwd_1dgroup(
   torch::Tensor x, 
   torch::Tensor n, 
-  torch::Tensor d) {
-  return rational_fwd_cuda_1dgroup(x, n, d);
+  torch::Tensor d,
+  int group) {
+  return rational_fwd_cuda_1dgroup(x, n, d, group);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
