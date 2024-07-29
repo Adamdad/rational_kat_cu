@@ -6,31 +6,32 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     const scalar_t* __restrict__ a,
     const scalar_t* __restrict__ b, 
     scalar_t* __restrict__ result, 
-    int B, int L, int D, int group) {
+    int B, int L, int D, int group, int total_elements, int D_per_group) {
 
-    int D_per_group = D / group;
-    int total_elements = B * L * D;
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (idx >= total_elements) return;  // Early return if out of bounds
+    if (idx >= total_elements) return;  // Prevent out-of-bounds memory access
 
-    // int b_index = idx / (L * D); // B dimension index
-    // int l_index = (idx / D) % L; // L dimension index
-    int d_index = idx % D;       // D dimension index
-    int g_index = d_index / D_per_group;  // Group index
+    // Calculate the index within the dimension D
+    int d_index = idx % D;
+    // Calculate the group index based on the position within dimension D
+    int g_index = d_index / D_per_group;
 
-    // Load shared memory for coefficients
+    // Load shared memory for coefficients, specific to the group
     __shared__ scalar_t s_a[6];
     __shared__ scalar_t s_b[4];
 
+    // Load 'a' coefficients into shared memory for this group
     if (threadIdx.x < 6) {
         s_a[threadIdx.x] = a[g_index * 6 + threadIdx.x];
     }
+    // Load 'b' coefficients and their absolute values into shared memory
     if (threadIdx.x < 4) {
         s_b[threadIdx.x] = abs(b[g_index * 4 + threadIdx.x]);
     }
     __syncthreads();
 
+    // Obtain the input value from the tensor
     scalar_t xp1 = x[idx];
     scalar_t abs_xp1 = abs(xp1);
 
@@ -68,7 +69,7 @@ torch::Tensor rational_fwd_cuda_1dgroup(
             n.data_ptr<scalar_t>(),
             d.data_ptr<scalar_t>(),
             result.data_ptr<scalar_t>(),
-            x.size(0), x.size(1), x.size(2), group);
+            x.size(0), x.size(1), x.size(2), group, total_elements, x.size(2) / group);
         }));
 
     return result;
