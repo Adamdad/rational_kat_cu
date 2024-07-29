@@ -145,18 +145,50 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     # Concatenate the results along the depth dimension
     return torch.cat(results, dim=2)
 
+def test_vectorized_forward(x, numerator_weights, denominator_weights, group_size=4):
+        
+        print("Testing forward pass")
+        B, L, D = x.shape
+        # Perform the rational function computation
+        loop_results = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
+        vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    
+        # Check if the results match
+        assert torch.allclose(loop_results, vector_result)
+        print("Forward pass test passed")
 
 def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
     print("Testing forward pass")
     # Perform the rational function computation
-    result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    # loop_results = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
+    
+    vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
 
     my_results = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
 
     # Check if the results match
-    assert torch.allclose(result, my_results)
+    assert torch.allclose(vector_result, my_results)
     print("Forward pass test passed")
+    print("#"*50)
+
+
+def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
+    import time
+    print("Benchmarking forward pass")
+    
+    start = time.time()
+    # Perform the rational function computation
+    result = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
+    end = time.time()
+    print("Time taken for loop forward pass: {:.4f} seconds".format(end - start))
+    
+    start = time.time()
+    # Perform the rational function computation
+    result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    end = time.time()
+    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(end - start))
+    
     print("#"*50)
     return result
 
@@ -177,14 +209,8 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.rand(1024, 77, 640, dtype=torch.float32, device='cuda')
+    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     
     
-    # test_forward(x, numerator_weights, denominator_weights, group_size=group_size)
-    # result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
-    loop_results = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
-    vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
-    # print(loop_results.shape)
-    print(vector_result.shape)
-    print(torch.allclose(loop_results, vector_result))
     
     
