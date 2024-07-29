@@ -83,7 +83,7 @@ class My_rational_optimized(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         x, w_numerator, w_denominator = ctx.saved_tensors
-        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
+        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd_optimized(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
 def test_forward(x, numerator_weights, denominator_weights):
