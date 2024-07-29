@@ -394,9 +394,9 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         // Compute powers of axp
         scalar_t axp_powers[4];
         axp_powers[0] = axp;
-        axp_powers[1] = axp * axp_powers[0]; // axp^2
-        axp_powers[2] = axp * axp_powers[1]; // axp^3
-        axp_powers[3] = axp * axp_powers[2]; // axp^4
+        axp_powers[1] = abs(xp_powers[1]); // axp^2
+        axp_powers[2] = abs(xp_powers[2]); // axp^3
+        axp_powers[3] = abs(xp_powers[3]); // axp^4
 
         // Compute absolute values once
 
@@ -432,11 +432,18 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
 
+        // Precompute common factors outside the loops
+        scalar_t common_factor_da = Q_inv * grad_o;
+        scalar_t common_factor_db = (-P * Q_inv2) * grad_o;
+
+        // Loop for computing d_a contributions
         for (int i = 0; i < 6; ++i) {
-            local_da[i] += xp_powers[i] * Q_inv * grad_o;
+            local_da[i] += xp_powers[i] * common_factor_da;
         }
+
+        // Loop for computing d_b contributions
         for (int i = 0; i < 4; ++i) {
-            local_db[i] += (-P * Q_inv2) * copysign(1.0, b[i]) * axp_powers[i] * grad_o;
+            local_db[i] += copysign(1.0, b[i]) * axp_powers[i] * common_factor_db;
         }
     }
 
