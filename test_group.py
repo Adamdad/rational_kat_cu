@@ -201,7 +201,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     loss_fn = torch.nn.MSELoss(reduction='sum')
     B, L, D = x.shape
     # Perform the rational function computation
-    output = process_groups(B, L, D, x, numerator_weights, denominator_weights, group_size)
+    output = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
     print("torch output", output)
     loss = loss_fn(expected_output, output)
     loss.backward()
