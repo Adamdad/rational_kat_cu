@@ -171,6 +171,10 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
     print("Vectorized results shape:", vector_result.shape)
     print(vector_result)
+    
+    assert torch.allclose(vector_result[0], my_results[0]), "First element mismatch"
+    assert torch.allclose(vector_result[:, 1], my_results[:,1]), "Second element mismatch"
+    assert torch.allclose(vector_result[:, :, 0], my_results[:,:, 0]), "Third element mismatch"
     # Check if the results match
     assert torch.allclose(vector_result, my_results)
     print("Forward pass test passed")
