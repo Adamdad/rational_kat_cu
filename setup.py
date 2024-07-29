@@ -3,7 +3,6 @@ from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 
 
-
 sources = glob.glob('src/*.cpp')+glob.glob('src/*.cu')
 
 
@@ -18,7 +17,8 @@ setup(
                         specialized mathematical functions with optimized CUDA support.""",  # Detailed description
     ext_modules=[
         CUDAExtension(name='kat_rational', 
-                      sources=sources
+                      sources=sources,
+                      extra_compile_args={'cxx': ['-g', '-O2'], 'nvcc': ['-O2']
                       )
     ],
     cmdclass={'build_ext': BuildExtension}
