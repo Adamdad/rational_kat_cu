@@ -134,6 +134,10 @@ def test_backward(x, numerator_weights, denominator_weights):
     print("torch_grad_n", torch_grad_n)
     print("my_grad_n", my_grad_n)
     print("off_grad_n", off_grad_n)
+    
+    print("torch_grad_d", torch_grad_d)
+    print("my_grad_d", my_grad_d)
+    print("off_grad_d", off_grad_d)
 
     # Check if the results match
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradients do not match"
