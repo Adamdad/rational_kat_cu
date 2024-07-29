@@ -53,7 +53,7 @@ def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator, group):
     z = z.view(group, B * L * D_per_group)  # Flatten for group-wise operation
 
     # Generate powers of z for polynomial terms, assuming _get_xps function supports batched operation
-    xps = _get_xps(z, len_num, len_deno).permute(0, 2, 1)  # Should output shape: (group, B * L * D_per_group, max(len_num, len_deno))
+    xps = _get_xps(z, len_num, len_deno)  # Should output shape: (group, B * L * D_per_group, max(len_num, len_deno))
 
     # Compute numerator as a dot product of powers of z and weights
     numerator = torch.bmm(weight_numerator.unsqueeze(1), xps).squeeze(1)  # Shape: (group, B * L * D_per_group)
