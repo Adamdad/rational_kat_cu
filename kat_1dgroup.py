@@ -38,7 +38,7 @@ class KAT_1DGroup(nn.Module):
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
             weight_denominator = torch.cat([weight_denominator]*self.num_groups).view(self.num_groups, -1)
         
-        print(weight_denominator.shape, weight_numerator.shape)
+        print(weight_numerator.shape, weight_denominator.shape)
         print(self.weight_numerator.shape, self.weight_denominator.shape)
         
         self.weight_numerator.data = weight_numerator
