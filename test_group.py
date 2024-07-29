@@ -246,7 +246,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     
     used_time /= 100
-    print("Time taken by Rational_CUDA_A_F:", used_time, "Peak memory:", peak_mem)
+    print("Time taken by loop bwd:", used_time, "Peak memory:", peak_mem)
     
     used_time = 0
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
@@ -264,7 +264,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     used_time += time.time() - start
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     used_time /= 100
-    print("Time taken by kat_rational.rational_bwd:", used_time, "Peak memory:", peak_mem)
+    print("Time taken by torch vectorized bwd:", used_time, "Peak memory:", peak_mem)
     
     used_time = 0
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
@@ -283,7 +283,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
         
     used_time /= 100
-    print("Time taken by kat_rational.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
+    print("Time taken by kat_rational.My_rational_1dgroup bwd:", used_time, "Peak memory:", peak_mem)
 
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
