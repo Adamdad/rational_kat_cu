@@ -365,6 +365,7 @@ __global__ void rational_bwd_cuda_kernel_optimized(
 
     __shared__ scalar_t shared_a[6];
     __shared__ scalar_t shared_b_abs[4];
+    __shared__ scalar_t shared_b[4];
 
     // Preloading 'a' coefficients into shared memory
     if (threadIdx.x < 6) {
@@ -374,6 +375,7 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     // Preloading absolute values of 'b' coefficients into shared memory
     if (threadIdx.x < 4) {
         shared_b_abs[threadIdx.x] = abs(b[threadIdx.x]);
+        shared_b[threadIdx.x] = b[threadIdx.x];
     }
 
     double local_da[6] = {0}; // Local accumulation arrays
@@ -394,9 +396,9 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         // Compute powers of axp
         scalar_t axp_powers[4];
         axp_powers[0] = axp;
-        axp_powers[1] = abs(xp_powers[1]); // axp^2
-        axp_powers[2] = abs(xp_powers[2]); // axp^3
-        axp_powers[3] = abs(xp_powers[3]); // axp^4
+        axp_powers[1] = axp * axp_powers[0]; // axp^2
+        axp_powers[2] = axp * axp_powers[1]; // axp^3
+        axp_powers[3] = axp * axp_powers[2]; // axp^4
 
         // Compute absolute values once
 
@@ -412,12 +414,8 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         + shared_b_abs[1] * axp_powers[1] 
         + shared_b_abs[2] * axp_powers[2] 
         + shared_b_abs[3] * axp_powers[3];
-        
-        scalar_t Q_inv = 1.0 / Q;
-        scalar_t Q_inv2 = Q_inv * Q_inv;
 
-        scalar_t grad_o = grad_output[index];
-        
+
         scalar_t R = shared_a[1] 
         + 2.0 * shared_a[2] * xp_powers[0] 
         + 3.0 * shared_a[3] * xp_powers[1] 
@@ -428,22 +426,28 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         + 2.0 * shared_b_abs[1] * axp_powers[0] 
         + 3.0 * shared_b_abs[2] * axp_powers[1] 
         + 4.0 * shared_b_abs[3] * axp_powers[2]);
+        
+        scalar_t Q_inv = 1.0 / Q;
 
-        scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
+        scalar_t grad_o = grad_output[index];
+        
+        scalar_t mpq2 = -P/(Q*Q);
+
+        scalar_t d_i_x = (R * Q_inv + S * mpq2) * grad_o;
         d_x[index] = d_i_x;
 
         // Precompute common factors outside the loops
-        scalar_t common_factor_da = Q_inv * grad_o;
-        scalar_t common_factor_db = (-P * Q_inv2) * grad_o;
+        // scalar_t common_factor_da = Q_inv * grad_o;
+        // scalar_t common_factor_db = mpq2 * grad_o;
 
         // Loop for computing d_a contributions
         for (int i = 0; i < 6; ++i) {
-            local_da[i] += xp_powers[i] * common_factor_da;
+            local_da[i] += Q_inv * xp_powers[i] * grad_o;
         }
 
         // Loop for computing d_b contributions
         for (int i = 0; i < 4; ++i) {
-            local_db[i] += copysign(1.0, b[i]) * axp_powers[i] * common_factor_db;
+            local_db[i] += mpq2 * copysign(1.0, shared_b[i]) * axp_powers[i] * grad_o;
         }
     }
 
