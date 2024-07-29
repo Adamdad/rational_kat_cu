@@ -399,10 +399,20 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         axp_powers[3] = axp * axp_powers[2]; // axp^4
 
         // Compute absolute values once
-        // scalar_t b_abs[4] = {abs(b[0]), abs(b[1]), abs(b[2]), abs(b[3])};
 
-        scalar_t P = shared_a[0] + shared_a[1] * xp_powers[0] + shared_a[2] * xp_powers[1] + shared_a[3] * xp_powers[2] + shared_a[4] * xp_powers[3] + shared_a[5] * xp_powers[4];
-        scalar_t Q = 1.0 + shared_b_abs[0] * axp_powers[0] + shared_b_abs[1] * axp_powers[1] + shared_b_abs[2] * axp_powers[2] + shared_b_abs[3] * axp_powers[3];
+        scalar_t P = shared_a[0] 
+        + shared_a[1] * xp_powers[0] 
+        + shared_a[2] * xp_powers[1] 
+        + shared_a[3] * xp_powers[2] 
+        + shared_a[4] * xp_powers[3] 
+        + shared_a[5] * xp_powers[4];
+
+        scalar_t Q = 1.0 
+        + shared_b_abs[0] * axp_powers[0] 
+        + shared_b_abs[1] * axp_powers[1] 
+        + shared_b_abs[2] * axp_powers[2] 
+        + shared_b_abs[3] * axp_powers[3];
+        
         scalar_t Q_inv = 1.0 / Q;
         scalar_t Q_inv2 = Q_inv * Q_inv;
 
