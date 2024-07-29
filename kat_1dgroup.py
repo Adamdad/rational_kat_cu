@@ -121,12 +121,12 @@ class KAT_1DGroup(nn.Module):
 
     
 if __name__=="__main__":
-    model = KAT_1DGroup()
+    model = KAT_1DGroup().cuda()
     x = torch.linspace(-2, 2, 100)
     
     x = x.unsqueeze(0).unsqueeze(0)
     print(x.shape)
-    y = model(x)
+    y = model(x.cuda())
     y = y.squeeze(0).squeeze(0)
     # y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
     # y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
