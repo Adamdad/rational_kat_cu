@@ -407,8 +407,17 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         scalar_t Q_inv2 = Q_inv * Q_inv;
 
         scalar_t grad_o = grad_output[index];
-        scalar_t R = shared_a[1] + 2.0 * shared_a[2] * xp_powers[0] + 3.0 * shared_a[3] * xp_powers[1] + 4.0 * shared_a[4] * xp_powers[2] + 5.0 * shared_a[5] * xp_powers[3];
-        scalar_t S = copysign(1.0, xp) * (shared_b_abs[0] + 2.0 * shared_b_abs[1] * axp_powers[0] + 3.0 * shared_b_abs[2] * axp_powers[1] + 4.0 * shared_b_abs[3] * axp_powers[2]);
+        
+        scalar_t R = shared_a[1] 
+        + 2.0 * shared_a[2] * xp_powers[0] 
+        + 3.0 * shared_a[3] * xp_powers[1] 
+        + 4.0 * shared_a[4] * xp_powers[2] 
+        + 5.0 * shared_a[5] * xp_powers[3];
+
+        scalar_t S = copysign(1.0, xp) * (shared_b_abs[0] 
+        + 2.0 * shared_b_abs[1] * axp_powers[0] 
+        + 3.0 * shared_b_abs[2] * axp_powers[1] 
+        + 4.0 * shared_b_abs[3] * axp_powers[2]);
 
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
