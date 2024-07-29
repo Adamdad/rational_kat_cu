@@ -34,9 +34,12 @@ class KAT_1DGroup(nn.Module):
         with open(f'{cfd}/init.json') as json_file:
             data = json.load(json_file)
             weight_numerator = torch.tensor(data[mode]["init_w_numerator"])
+            weight_numerator = torch.cat([weight_numerator]*self.num_groups).view(self.num_groups, -1)
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
+            weight_denominator = torch.cat([weight_denominator]*self.num_groups).view(self.num_groups, -1)
         
         print(weight_denominator, weight_numerator)
+        
         self.weight_numerator.data = weight_numerator
         self.weight_denominator.data = weight_denominator
 
