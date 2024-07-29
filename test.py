@@ -104,7 +104,7 @@ def test_backward(x, numerator_weights, denominator_weights):
     print("Testing backward pass")
     
     expected_output = torch.sigmoid(x)
-    loss_fn = torch.nn.MSELoss(reduction='sum')
+    loss_fn = torch.nn.MSELoss(reduction='mean')
 
     # Perform the rational function computation
     output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
