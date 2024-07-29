@@ -374,6 +374,8 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         sdb[2] = 0;
         sdb[3] = 0;
     }
+    
+    __syncthreads();
 
     __shared__ scalar_t shared_a[6];
     __shared__ scalar_t shared_b_abs[4];
@@ -386,8 +388,8 @@ __global__ void rational_bwd_cuda_kernel_optimized(
 
     // Preloading absolute values of 'b' coefficients into shared memory
     if (threadIdx.x < 4) {
-        shared_b_abs[threadIdx.x] = abs(b[threadIdx.x]);
         shared_b[threadIdx.x] = b[threadIdx.x];
+        shared_b_abs[threadIdx.x] = abs(shared_b[threadIdx.x]);
     }
 
     scalar_t local_da[6] = {0}; // Local accumulation arrays
