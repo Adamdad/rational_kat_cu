@@ -23,7 +23,7 @@ def _get_xps(z, len_numerator, len_denominator):
     return torch.stack(xps, dim=1)
 
 
-def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator):
+def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator, group):
     """
     Computes the rational function P(x) / Q(x) group-wise where P and Q are polynomials defined by
     the given weights for their coefficients for each group.
@@ -42,7 +42,6 @@ def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator):
     """
     device = x.device
     B, L, D = x.shape
-    group = weight_numerator.size(0)
     len_num = weight_numerator.size(1)
     len_deno = weight_denominator.size(1)
 
