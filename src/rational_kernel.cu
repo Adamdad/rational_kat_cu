@@ -429,15 +429,15 @@ __global__ void rational_bwd_cuda_kernel_optimized(
 
 
         scalar_t R = shared_a[1] 
-        + 2.0 * shared_a[2] * xp_powers[0] 
-        + 3.0 * shared_a[3] * xp_powers[1] 
-        + 4.0 * shared_a[4] * xp_powers[2] 
-        + 5.0 * shared_a[5] * xp_powers[3];
+        + scalar_t(2.0) * shared_a[2] * xp_powers[0] 
+        + scalar_t(3.0) * shared_a[3] * xp_powers[1] 
+        + scalar_t(4.0) * shared_a[4] * xp_powers[2] 
+        + scalar_t(5.0) * shared_a[5] * xp_powers[3];
 
-        scalar_t S = copysign(1.0, xp) * (shared_b_abs[0] 
-        + 2.0 * shared_b_abs[1] * axp_powers[0] 
-        + 3.0 * shared_b_abs[2] * axp_powers[1] 
-        + 4.0 * shared_b_abs[3] * axp_powers[2]);
+        scalar_t S = copysign(scalar_t(1.0), xp) * (shared_b_abs[0] 
+        + scalar_t(2.0) * shared_b_abs[1] * axp_powers[0] 
+        + scalar_t(3.0) * shared_b_abs[2] * axp_powers[1] 
+        + scalar_t(4.0) * shared_b_abs[3] * axp_powers[2]);
         
         // scalar_t Q_inv = 1.0 / Q;
 
@@ -460,7 +460,7 @@ __global__ void rational_bwd_cuda_kernel_optimized(
 
         // Loop for computing d_b contributions
         for (int i = 0; i < 4; ++i) {
-            local_db[i] += mpq2 * copysign(1.0, shared_b[i]) * axp_powers[i] * grad_o;
+            local_db[i] += mpq2 * copysign(scalar_t(1.0), shared_b[i]) * axp_powers[i] * grad_o;
         }
     }
 
