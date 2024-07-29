@@ -14,16 +14,16 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
 
     if (idx >= total_elements) return;  // Early return if out of bounds
 
-    int b_index = idx / (L * D); // B dimension index
-    int l_index = (idx / D) % L; // L dimension index
+    // int b_index = idx / (L * D); // B dimension index
+    // int l_index = (idx / D) % L; // L dimension index
     int d_index = idx % D;       // D dimension index
     int g_index = d_index / D_per_group;  // Group index
 
     // Load shared memory for coefficients
-    __shared__ scalar_t s_a[5];
+    __shared__ scalar_t s_a[6];
     __shared__ scalar_t s_b[4];
 
-    if (threadIdx.x < 5) {
+    if (threadIdx.x < 6) {
         s_a[threadIdx.x] = a[g_index * 5 + threadIdx.x];
     }
     if (threadIdx.x < 4) {
@@ -35,8 +35,8 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     scalar_t abs_xp1 = abs(xp1);
 
     // Compute the polynomial for P using Horner's method
-    scalar_t P = s_a[4];
-    for (int i = 3; i >= 0; --i) {
+    scalar_t P = s_a[5];
+    for (int i = 4; i >= 0; --i) {
         P = fmaf(P, xp1, s_a[i]);
     }
     
@@ -57,10 +57,7 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     int group
     ){
     auto result = at::empty_like(x);
-    const int B = x.size(0);
-    const int L = x.size(1);
-    const int D = x.size(2);
-    int total_elements = B * L * D;
+    const int total_elements = x.numel();
     int threads_per_block = 256;  // Adjust as needed based on device capabilities
     int num_blocks = (total_elements + threads_per_block - 1) / threads_per_block;
 
@@ -71,7 +68,7 @@ torch::Tensor rational_fwd_cuda_1dgroup(
             n.data_ptr<scalar_t>(),
             d.data_ptr<scalar_t>(),
             result.data_ptr<scalar_t>(),
-            B, L, D, group);
+            x.size(0), x.size(1), x.size(2), group);
         }));
 
     return result;
