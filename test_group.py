@@ -275,13 +275,13 @@ if __name__=="__main__":
     group_size = 4
     # Define tensors for the numerator and denominator coefficients
     # numerator of size (group_size, 5) and denominator of size (group_size, 4)
-    numerator_weights = nn.Parameter(torch.randn(4, 6, dtype=torch.float32, device='cuda')/640, requires_grad=True)
-    denominator_weights = nn.Parameter(torch.randn(4, 4, dtype=torch.float32, device='cuda')/640, requires_grad=True)
+    numerator_weights = nn.Parameter(torch.randn(4, 6, dtype=torch.float32, device='cuda'), requires_grad=True)
+    denominator_weights = nn.Parameter(torch.randn(4, 4, dtype=torch.float32, device='cuda'), requires_grad=True)
     # numerator_weights = nn.Parameter(torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda'), requires_grad=True)
     # denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
-    x = torch.rand(512, 10, 32, dtype=torch.float32, device='cuda')
+    x = torch.randn(512, 10, 32, dtype=torch.float32, device='cuda')
     # test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     test_backward(x, numerator_weights, denominator_weights, group_size)
