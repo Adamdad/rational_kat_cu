@@ -205,8 +205,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("torch output", output)
     loss = loss_fn(expected_output, output)
     loss.backward()
-    torch_grad_n = numerator_weights.grad
-    torch_grad_d = denominator_weights.grad
+    torch_grad_n = numerator_weights.grad.clone()
+    torch_grad_d = denominator_weights.grad.clone()
     
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
@@ -215,8 +215,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("my output", my_output)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
-    my_grad_n = numerator_weights.grad
-    my_grad_d = denominator_weights.grad
+    my_grad_n = numerator_weights.grad.clone()
+    my_grad_d = denominator_weights.grad.clone()
     
     print("Torch grad numerator:", torch_grad_n)
     print("My grad numerator:", my_grad_n)
