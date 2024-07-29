@@ -208,6 +208,19 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
     
+    
+    used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    for _ in range(100):
+        start = time.time()
+        result = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+
+    used_time /= 100
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
+    
     print("#"*50)
     return result
 
@@ -228,8 +241,8 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.rand(512, 77, 640, dtype=torch.float32, device='cuda')
-    # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
-    test_forward(x, numerator_weights, denominator_weights, group_size)
+    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    # test_forward(x, numerator_weights, denominator_weights, group_size)
     
     
     
