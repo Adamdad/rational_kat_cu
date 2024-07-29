@@ -1,68 +1,81 @@
 #include <torch/extension.h>
 
 template <typename scalar_t>
-
-
-template <typename scalar_t>
-__global__ void rational_fwd_cuda_kernel_optimized(
+__global__ void rational_fwd_cuda_kernel_1dgroup(
     const scalar_t* __restrict__ x, 
     const scalar_t* __restrict__ a,
     const scalar_t* __restrict__ b, 
     scalar_t* __restrict__ result, 
-    size_t x_size) {
+    int B, int L, int D, int group) {
+
+    int D_per_group = D / group;
+
+    // Calculate the group index based on the third dimension
+    int g_index = (blockIdx.z * blockDim.z + threadIdx.z) / D_per_group;
+    int group_offset = g_index * D_per_group;
 
     // Use shared memory for coefficients
-    __shared__ scalar_t s_a[6];
-    __shared__ scalar_t s_ab[4];
+    __shared__ scalar_t s_a[5];
+    __shared__ scalar_t s_b[4];
 
-    if (threadIdx.x < 6) {
-        s_a[threadIdx.x] = a[threadIdx.x];
-        if (threadIdx.x < 4) {
-            s_ab[threadIdx.x] = abs(b[threadIdx.x]);
-        }
+    if (threadIdx.z < 5) {
+        s_a[threadIdx.z] = a[g_index * 5 + threadIdx.z];
+    }
+    if (threadIdx.z < 4) {
+        s_b[threadIdx.z] = abs(b[g_index * 4 + threadIdx.z]);
     }
     __syncthreads();
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    if (index < x_size) {
-        scalar_t xp1 = x[index];
+    int b_index = blockIdx.x; // B dimension
+    int l_index = blockIdx.y; // L dimension
+    int d_index = threadIdx.z + blockIdx.z * blockDim.z; // D dimension
+
+    if (d_index < D) {
+        scalar_t xp1 = x[b_index * (L * D) + l_index * D + d_index];
         scalar_t abs_xp1 = abs(xp1);
 
-        // Horner's method for polynomial computation for P using shared memory
-        scalar_t P = s_a[5];
-        for (int i = 4; i >= 0; --i) {
+        // Compute the polynomial for P using Horner's method
+        scalar_t P = s_a[4];
+        for (int i = 3; i >= 0; --i) {
             P = fmaf(P, xp1, s_a[i]);  // using FMA
         }
         
-        // Horner's method for polynomial computation for Q using shared memory
-        scalar_t Q = s_ab[3];
+        // Compute the polynomial for Q using Horner's method
+        scalar_t Q = s_b[3];
         for (int i = 2; i >= 0; --i) {
-            Q = fmaf(Q, abs_xp1, s_ab[i]);  // using FMA
+            Q = fmaf(Q, abs_xp1, s_b[i]);  // using FMA
         }
         Q = fmaf(Q, abs_xp1, 1.0);
 
-        result[index] = P / Q;
+        result[b_index * (L * D) + l_index * D + d_index] = P / Q;
     }
 }
 
-torch::Tensor rational_fwd_cuda_optimized(
+torch::Tensor rational_fwd_cuda_1dgroup(
     torch::Tensor x, 
     torch::Tensor n, 
-    torch::Tensor d
+    torch::Tensor d,
+    int group
     ){
     auto result = at::empty_like(x);
-    const auto x_size = x.numel();
-    int blockSize = 512;  // You might want to experiment with this value
-    int numBlocks = (x_size + blockSize - 1) / blockSize;
+    const int B = x.size(0);
+    const int L = x.size(1);
+    const int D = x.size(2);
+    int D_per_group = D / group;
+    int threads_per_block = 64;  // Adjust as needed based on device capabilities
+    int blocks_per_group = (D_per_group + threads_per_block - 1) / threads_per_block;
 
-    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_optimized", ([&] {
-    rational_fwd_cuda_kernel_optimized<scalar_t>
+    dim3 blockSize(threads_per_block, 1, 1);
+    dim3 numBlocks(B, L, blocks_per_group);
+
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_by_group", ([&] {
+    rational_fwd_cuda_kernel_1d_by_group<scalar_t>
         <<<numBlocks, blockSize>>>(
             x.data_ptr<scalar_t>(),
-            n.data_ptr<scalar_t>(),
-            d.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            b.data_ptr<scalar_t>(),
             result.data_ptr<scalar_t>(),
-            x_size);
+            B, L, D, group);
         }));
 
     return result;
@@ -78,7 +91,7 @@ torch::Tensor rational_fwd_cuda_optimized(
 
 
 template <typename scalar_t>
-__global__ void rational_bwd_cuda_kernel_optimized(
+__global__ void rational_bwd_cuda_kernel_1dgroup(
     const scalar_t* __restrict__ grad_output,
     const scalar_t* __restrict__ x,
     const scalar_t* __restrict__ a,
@@ -160,7 +173,7 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     }
 }
 
-std::vector<torch::Tensor> rational_bwd_cuda_optimized(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d){
+std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d){
     const auto x_size = x.numel();
     auto d_x = at::empty_like(x);
     auto d_n = at::zeros_like(n).toType(at::kDouble);
@@ -169,8 +182,8 @@ std::vector<torch::Tensor> rational_bwd_cuda_optimized(torch::Tensor grad_output
     int blockSize = 512;  // You might want to experiment with this value
     int numBlocks = (x_size + blockSize - 1) / blockSize;
 
-    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda_optimized", ([&] {
-    rational_bwd_cuda_kernel_optimized<scalar_t>
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda_1dgroup", ([&] {
+    rational_bwd_cuda_kernel_1dgroup<scalar_t>
         <<<numBlocks, blockSize>>>(
             grad_output.data_ptr<scalar_t>(),
             x.data_ptr<scalar_t>(),

@@ -45,6 +45,13 @@ std::vector<torch::Tensor> rational_bwd_optimized(
   return rational_bwd_cuda_optimized(grad_output, x, n, d);
 }
 
+torch::Tensor rational_fwd_1dgroup(
+  torch::Tensor x, 
+  torch::Tensor n, 
+  torch::Tensor d) {
+  return rational_fwd_cuda_1dgroup(x, n, d);
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("rational_fwd", &rational_fwd, 
     "rational forward (CUDA)");
@@ -54,4 +61,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     "rational backward optimized (CUDA)");
   m.def("rational_fwd_optimized", &rational_fwd_optimized,
     "rational forward optimized (CUDA)");
+  m.def("rational_fwd_1dgroup", &rational_fwd_1dgroup,
+    "rational forward 1dgroup (CUDA)");
 }
