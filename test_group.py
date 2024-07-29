@@ -177,17 +177,25 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
     print("Benchmarking forward pass")
     
-    start = time.time()
-    # Perform the rational function computation
-    result = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
-    end = time.time()
-    print("Time taken for loop forward pass: {:.4f} seconds".format(end - start))
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        result = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+
+    used_time /= 100
+    print("Time taken for loop forward pass: {:.4f} seconds".format(used_time))
     
-    start = time.time()
-    # Perform the rational function computation
-    result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
-    end = time.time()
-    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(end - start))
+    used_time = 0
+    for _ in range(100):
+        start = time.time()
+        result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+        torch.cuda.synchronize()
+        used_time += time.time() - start
+
+    used_time /= 100
+    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time))
     
     print("#"*50)
     return result
