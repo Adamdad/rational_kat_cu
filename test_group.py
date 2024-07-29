@@ -166,7 +166,11 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
 
     my_results = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
-
+    print("My results shape:", my_results.shape)
+    print(my_results)
+    
+    print("Vectorized results shape:", vector_result.shape)
+    print(vector_result)
     # Check if the results match
     assert torch.allclose(vector_result, my_results)
     print("Forward pass test passed")
