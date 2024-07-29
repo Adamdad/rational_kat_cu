@@ -96,16 +96,16 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     const scalar_t* __restrict__ a,
     const scalar_t* __restrict__ b,
     scalar_t* __restrict__ d_x,
-    double* __restrict__ d_a,
-    double* __restrict__ d_b,
+    float* __restrict__ d_a,
+    float* __restrict__ d_b,
     int B, int L, int D, int group, 
     int x_size, 
     const int n_size, 
     const int d_size,
     int D_per_group) {
     
-    __shared__ double sda[24];
-    __shared__ double sdb[16];
+    __shared__ float sda[24];
+    __shared__ float sdb[16];
     // initialize shared memory to zero
     if (threadIdx.x == 0) {
         for (int i = 0; i < n_size; ++i) {
@@ -234,8 +234,8 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
     const int d_size = d.numel();
 
     auto d_x = at::empty_like(x);
-    auto d_n = at::zeros_like(n).toType(at::kDouble);
-    auto d_d = at::zeros_like(d).toType(at::kDouble);
+    auto d_n = at::zeros_like(n).toType(at::kFloat);
+    auto d_d = at::zeros_like(d).toType(at::kFloat);
 
     int B = x.size(0);
     int L = x.size(1);
@@ -252,10 +252,10 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
             n.data_ptr<scalar_t>(),
             d.data_ptr<scalar_t>(),
             d_x.data_ptr<scalar_t>(),
-            d_n.data_ptr<double>(),
-            d_d.data_ptr<double>(),
+            d_n.data_ptr<float>(),
+            d_d.data_ptr<float>(),
             B, L, D, group, x_size, n_size, d_size, D / group);
     }));
 
-    return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
+    return {d_x, d_n, d_d};
 }
