@@ -1,5 +1,5 @@
 import torch
-import my_lib
+import kat_rational
 from rational.torch import Rational
 from torch import nn
 
@@ -64,26 +64,26 @@ class My_rational(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, weight_numerator, weight_denominator):
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
-        x = my_lib.rational_fwd(input, weight_numerator, weight_denominator)
+        x = kat_rational.rational_fwd(input, weight_numerator, weight_denominator)
         return x
 
     @staticmethod
     def backward(ctx, grad_output):
         x, w_numerator, w_denominator = ctx.saved_tensors
-        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd(grad_output, x, w_numerator, w_denominator)
+        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
 class My_rational_optimized(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, weight_numerator, weight_denominator):
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
-        x = my_lib.rational_fwd_optimized(input, weight_numerator, weight_denominator)
+        x = kat_rational.rational_fwd_optimized(input, weight_numerator, weight_denominator)
         return x
 
     @staticmethod
     def backward(ctx, grad_output):
         x, w_numerator, w_denominator = ctx.saved_tensors
-        d_x, d_weight_numerator, d_weight_denominator = my_lib.rational_bwd_optimized(grad_output, x, w_numerator, w_denominator)
+        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_optimized(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
 def test_forward(x, numerator_weights, denominator_weights):
@@ -183,7 +183,7 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     used_time += time.time() - start
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     used_time /= 100
-    print("Time taken by my_lib.rational_bwd:", used_time, "Peak memory:", peak_mem)
+    print("Time taken by kat_rational.rational_bwd:", used_time, "Peak memory:", peak_mem)
     
     used_time = 0
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
@@ -202,7 +202,7 @@ def benchmark_bwd_time(x, numerator_weights, denominator_weights):
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
         
     used_time /= 100
-    print("Time taken by my_lib.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
+    print("Time taken by kat_rational.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
     
     
 
@@ -226,7 +226,7 @@ def benchmark_fwd_time(x, numerator_weights, denominator_weights):
         used_time += time.time() - start
 
     used_time /= 100
-    print("Time taken by my_lib.rational_fwd:", used_time)
+    print("Time taken by kat_rational.rational_fwd:", used_time)
     
     used_time = 0
     for _ in range(100):
@@ -236,7 +236,7 @@ def benchmark_fwd_time(x, numerator_weights, denominator_weights):
         used_time += time.time() - start
 
     used_time /= 100
-    print("Time taken by my_lib.rational_fwd_optimized:", used_time)
+    print("Time taken by kat_rational.rational_fwd_optimized:", used_time)
     
     
 

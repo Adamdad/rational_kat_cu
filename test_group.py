@@ -1,5 +1,5 @@
 import torch
-import my_lib
+import kat_rational
 from rational.torch import Rational
 from torch import nn
 
@@ -145,6 +145,19 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     # Concatenate the results along the depth dimension
     return torch.cat(results, dim=2)
 
+class My_rational_1dgroup(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, weight_numerator, weight_denominator, group):
+        ctx.save_for_backward(input, weight_numerator, weight_denominator, group)
+        x = kat_rational.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, w_numerator, w_denominator, group = ctx.saved_tensors
+        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, x, w_numerator, w_denominator, group)
+        return d_x, d_weight_numerator, d_weight_denominator, None
+
 def test_vectorized_forward(x, numerator_weights, denominator_weights, group_size=4):
         
         print("Testing forward pass")
@@ -165,7 +178,7 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
     vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
 
-    my_results = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
+    my_results = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
     print("My results shape:", my_results.shape)
     print(my_results[0])
     
@@ -213,7 +226,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
-        result = my_lib.rational_fwd_1dgroup(x, numerator_weights, denominator_weights, group_size)
+        result = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         torch.cuda.synchronize()
         used_time += time.time() - start
 
