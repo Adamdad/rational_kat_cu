@@ -209,7 +209,6 @@ __global__ void rational_bwd_cuda_kernel(
     scalar_t d_a5 = 0;
     scalar_t a_5 = a[5];
     
-    
     scalar_t d_b0 = 0;
     scalar_t b_0 = b[0];
     scalar_t ab_0 = abs(b_0);
@@ -364,6 +363,19 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     __shared__ double sda[6];
     __shared__ double sdb[4];
 
+    __shared__ scalar_t shared_a[6];
+    __shared__ scalar_t shared_b_abs[4];
+
+    // Preloading 'a' coefficients into shared memory
+    if (threadIdx.x < 6) {
+        shared_a[threadIdx.x] = a[threadIdx.x];
+    }
+
+    // Preloading absolute values of 'b' coefficients into shared memory
+    if (threadIdx.x < 4) {
+        shared_b_abs[threadIdx.x] = abs(b[threadIdx.x]);
+    }
+
     double local_da[6] = {0}; // Local accumulation arrays
     double local_db[4] = {0};
 
@@ -387,16 +399,16 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         axp_powers[3] = axp * axp_powers[2]; // axp^4
 
         // Compute absolute values once
-        scalar_t b_abs[4] = {abs(b[0]), abs(b[1]), abs(b[2]), abs(b[3])};
+        // scalar_t b_abs[4] = {abs(b[0]), abs(b[1]), abs(b[2]), abs(b[3])};
 
-        scalar_t P = a[0] + a[1] * xp_powers[0] + a[2] * xp_powers[1] + a[3] * xp_powers[2] + a[4] * xp_powers[3] + a[5] * xp_powers[4];
-        scalar_t Q = 1.0 + b_abs[0] * axp_powers[0] + b_abs[1] * axp_powers[1] + b_abs[2] * axp_powers[2] + b_abs[3] * axp_powers[3];
+        scalar_t P = shared_a[0] + shared_a[1] * xp_powers[0] + shared_a[2] * xp_powers[1] + shared_a[3] * xp_powers[2] + shared_a[4] * xp_powers[3] + shared_a[5] * xp_powers[4];
+        scalar_t Q = 1.0 + shared_b_abs[0] * axp_powers[0] + shared_b_abs[1] * axp_powers[1] + shared_b_abs[2] * axp_powers[2] + shared_b_abs[3] * axp_powers[3];
         scalar_t Q_inv = 1.0 / Q;
         scalar_t Q_inv2 = Q_inv * Q_inv;
 
         scalar_t grad_o = grad_output[index];
-        scalar_t R = a[1] + 2.0 * a[2] * xp_powers[0] + 3.0 * a[3] * xp_powers[1] + 4.0 * a[4] * xp_powers[2] + 5.0 * a[5] * xp_powers[3];
-        scalar_t S = copysign(1.0, xp) * (b_abs[0] + 2.0 * b_abs[1] * axp_powers[0] + 3.0 * b_abs[2] * axp_powers[1] + 4.0 * b_abs[3] * axp_powers[2]);
+        scalar_t R = shared_a[1] + 2.0 * shared_a[2] * xp_powers[0] + 3.0 * shared_a[3] * xp_powers[1] + 4.0 * shared_a[4] * xp_powers[2] + 5.0 * shared_a[5] * xp_powers[3];
+        scalar_t S = copysign(1.0, xp) * (shared_b_abs[0] + 2.0 * shared_b_abs[1] * axp_powers[0] + 3.0 * shared_b_abs[2] * axp_powers[1] + 4.0 * shared_b_abs[3] * axp_powers[2]);
 
         scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
         d_x[index] = d_i_x;
