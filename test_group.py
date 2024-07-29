@@ -220,7 +220,8 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.rand(512, 77, 640, dtype=torch.float32, device='cuda')
-    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    test_forward(x, numerator_weights, denominator_weights, group_size)
     
     
     
