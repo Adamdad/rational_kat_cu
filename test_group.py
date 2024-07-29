@@ -326,8 +326,9 @@ if __name__=="__main__":
                 0.03746682605496631,
                 1.6561610853276082e-10
             ]], dtype=torch.float32, device='cuda'), requires_grad=True)
-    # numerator_weights = nn.Parameter(torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5], dtype=torch.float32, device='cuda'), requires_grad=True)
-    # denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
+    numerator_weights[1] *= 2
+    numerator_weights[2] *= 3
+    numerator_weights[3] *= 4
 
     # Input tensor
     x = torch.randn(10, 10, 320, dtype=torch.float32, device='cuda')
