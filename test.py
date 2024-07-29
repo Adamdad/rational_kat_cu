@@ -231,7 +231,7 @@ def benchmark_fwd_time(x, numerator_weights, denominator_weights):
 if __name__=="__main__":
     # Define tensors for the numerator and denominator coefficients
     numerator_weights = nn.Parameter(torch.tensor([0.1, 0.2, 0.3, 0.4], dtype=torch.float32, device='cuda'), requires_grad=True)
-    denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
+    denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
     x = torch.rand(1024, 640, dtype=torch.float32, device='cuda')
