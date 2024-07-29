@@ -183,6 +183,9 @@ if __name__=="__main__":
     # test_forward(x, numerator_weights, denominator_weights, group_size=group_size)
     # result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
     loop_results = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
-    print(loop_results.shape)
+    vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    # print(loop_results.shape)
+    print(vector_result.shape)
+    print(torch.allclose(loop_results, vector_result))
     
     
