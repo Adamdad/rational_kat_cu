@@ -439,13 +439,13 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         + 3.0 * shared_b_abs[2] * axp_powers[1] 
         + 4.0 * shared_b_abs[3] * axp_powers[2]);
         
-        scalar_t Q_inv = 1.0 / Q;
+        // scalar_t Q_inv = 1.0 / Q;
 
         scalar_t grad_o = grad_output[index];
         
         scalar_t mpq2 = -P/(Q*Q);
 
-        scalar_t d_i_x = (R * Q_inv + S * mpq2) * grad_o;
+        scalar_t d_i_x = (R / Q + S * mpq2) * grad_o;
         d_x[index] = d_i_x;
 
         // Precompute common factors outside the loops
@@ -453,9 +453,9 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         // scalar_t common_factor_db = mpq2 * grad_o;
 
         // Loop for computing d_a contributions
-        local_da[0] = Q_inv * grad_o;
+        local_da[0] = grad_o / Q;
         for (int i = 1; i < 6; ++i) {
-            local_da[i] += Q_inv * xp_powers[i-1] * grad_o;
+            local_da[i] += (xp_powers[i-1] / Q) * grad_o;
         }
 
         // Loop for computing d_b contributions
