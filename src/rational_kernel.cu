@@ -453,7 +453,7 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         // scalar_t common_factor_db = mpq2 * grad_o;
 
         // Loop for computing d_a contributions
-        local_da[0] = Q_inv * grad_o
+        local_da[0] = Q_inv * grad_o;
         for (int i = 1; i < 6; ++i) {
             local_da[i] += Q_inv * xp_powers[i-1] * grad_o;
         }
