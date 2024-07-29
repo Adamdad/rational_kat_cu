@@ -492,7 +492,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_optimized(torch::Tensor grad_output
     auto d_n = at::zeros_like(n).toType(at::kDouble);
     auto d_d = at::zeros_like(d).toType(at::kDouble);
 
-    int blockSize = 256;  // You might want to experiment with this value
+    int blockSize = 128;  // You might want to experiment with this value
     int numBlocks = (x_size + blockSize - 1) / blockSize;
 
     AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_bwd_cuda_optimized", ([&] {
