@@ -148,13 +148,15 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
 class My_rational_1dgroup(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, weight_numerator, weight_denominator, group):
-        ctx.save_for_backward(input, weight_numerator, weight_denominator, group)
+        ctx.save_for_backward(input, weight_numerator, weight_denominator)
+        ctx.group = group
         x = kat_rational.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
         return x
 
     @staticmethod
     def backward(ctx, grad_output):
-        x, w_numerator, w_denominator, group = ctx.saved_tensors
+        x, w_numerator, w_denominator = ctx.saved_tensors
+        group = ctx.group
         d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, x, w_numerator, w_denominator, group)
         return d_x, d_weight_numerator, d_weight_denominator, None
 
