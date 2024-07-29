@@ -17,14 +17,17 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     // Calculate the group index based on the position within dimension D
     int g_index = d_index / D_per_group;
 
-    scalar_t s_a[6];
-    scalar_t s_b[4];
-    for (int i = 0; i < 6; ++i) {
-        s_a[i] = a[g_index * 6 + i];
-    }
+    // Calculate specific indices for a and b based on group
+    int a_idx = g_index * 6;
+    int b_idx = g_index * 4;
 
+    // Load coefficients into registers
+    scalar_t s_a[6], s_b[4];
+    for (int i = 0; i < 6; ++i) {
+        s_a[i] = a[a_idx + i];
+    }
     for (int i = 0; i < 4; ++i) {
-        s_b[i] = b[g_index * 4 + i];
+        s_b[i] = abs(b[b_idx + i]);  // Store absolute values directly if needed
     }
 
     // Obtain the input value from the tensor
@@ -44,6 +47,7 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     }
     Q = fmaf(Q, abs_xp1, 1.0);
 
+    // Write the result of P / Q
     result[idx] = P / Q;
 }
 
