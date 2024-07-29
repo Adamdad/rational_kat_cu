@@ -202,7 +202,6 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     B, L, D = x.shape
     # Perform the rational function computation
     output = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
-    print("torch output", output)
     loss = loss_fn(expected_output, output)
     loss.backward()
     torch_grad_n = numerator_weights.grad.clone()
@@ -212,21 +211,77 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     denominator_weights.grad.zero_()
     
     my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
-    print("my output", my_output)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = numerator_weights.grad.clone()
     my_grad_d = denominator_weights.grad.clone()
     
-    print("Torch grad numerator:", torch_grad_n)
-    print("My grad numerator:", my_grad_n)
-    print("Torch grad denominator:", torch_grad_d)
-    print("My grad denominator:", my_grad_d)
-    
+    assert torch.allclose(my_output, output), "Output mismatch"
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
     
     print("Backward pass test passed")
+    
+def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
+    import time
+    expected_output = torch.sigmoid(x)
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+    B, L, D = x.shape
+    used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    start = time.time()
+    for _ in range(100):
+        output = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
+        loss = loss_fn(expected_output, output)
+        loss.backward()
+        torch.cuda.synchronize()
+        numerator_weights.grad.detach_()
+        numerator_weights.grad.zero_()
+        denominator_weights.grad.detach_()
+        denominator_weights.grad.zero_()
+        
+    used_time += time.time() - start
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    
+    used_time /= 100
+    print("Time taken by Rational_CUDA_A_F:", used_time, "Peak memory:", peak_mem)
+    
+    used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    start = time.time()
+    for _ in range(100):
+        my_output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+        loss = loss_fn(expected_output, my_output)
+        loss.backward()
+        torch.cuda.synchronize()
+        
+        numerator_weights.grad.detach_()
+        numerator_weights.grad.zero_()
+        denominator_weights.grad.detach_()
+        denominator_weights.grad.zero_()
+    used_time += time.time() - start
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    used_time /= 100
+    print("Time taken by kat_rational.rational_bwd:", used_time, "Peak memory:", peak_mem)
+    
+    used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    start = time.time()
+    for _ in range(100):
+        my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        loss = loss_fn(expected_output, my_output)
+        loss.backward()
+        torch.cuda.synchronize()
+        numerator_weights.grad.detach_()
+        numerator_weights.grad.zero_()
+        denominator_weights.grad.detach_()
+        denominator_weights.grad.zero_()
+        
+    used_time += time.time() - start
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+        
+    used_time /= 100
+    print("Time taken by kat_rational.rational_bwd_optimized:", used_time, "Peak memory:", peak_mem)
 
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
@@ -331,11 +386,11 @@ if __name__=="__main__":
     numerator_weights.data[3] *= 4
 
     # Input tensor
-    x = torch.randn(10, 10, 320, dtype=torch.float32, device='cuda')
+    x = torch.randn(64, 10, 320, dtype=torch.float32, device='cuda')
     # test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     test_backward(x, numerator_weights, denominator_weights, group_size)
-    
+    benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
     
     
