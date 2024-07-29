@@ -97,7 +97,7 @@ def test_forward(x, numerator_weights, denominator_weights):
     print("my_results", my_results)
 
     # Check if the results match
-    assert torch.allclose(result, my_results, atol=1e-5), "Forward pass results do not match"
+    assert torch.allclose(result, my_results, atol=1e-6), "Forward pass results do not match"
     print("Forward pass test passed")
     print("#"*50)
     return result
