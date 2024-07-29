@@ -127,6 +127,7 @@ if __name__=="__main__":
     x = x.unsqueeze(0).unsqueeze(0)
     print(x.shape)
     y = model(x.cuda())
+    x = x.squeeze(0).squeeze(0)
     y = y.squeeze(0).squeeze(0)
     # y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
     # y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
