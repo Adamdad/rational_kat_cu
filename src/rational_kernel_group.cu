@@ -101,8 +101,8 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     int B, int L, int D, int group, 
     int x_size, int D_per_group) {
     
-    __shared__ double sda[6];
-    __shared__ double sdb[4];
+    __shared__ double sda[6 * group];
+    __shared__ double sdb[4 * group];
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -196,20 +196,20 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
 
     // Reduce local arrays to shared memory
     for (int i = 0; i < 6; ++i) {
-        atomicAdd(&sda[i], local_da[i]);
+        atomicAdd(&sda[a_idx + i], local_da[i]);
     }
     for (int i = 0; i < 4; ++i) {
-        atomicAdd(&sdb[i], local_db[i]);
+        atomicAdd(&sdb[b_idx + i], local_db[i]);
     }
 
     __syncthreads();
 
     // Only one thread writes back to global memory
     if (threadIdx.x == 0) {
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 6 * group; ++i) {
             atomicAdd(&d_a[i], sda[i]);
         }
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4 * group; ++i) {
             atomicAdd(&d_b[i], sdb[i]);
         }
     }
