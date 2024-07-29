@@ -192,34 +192,32 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("Backward pass test passed")
     
 def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
-    
-    expected_output = torch.sigmoid(x)  # Calculate expected output for loss computation
+    expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     optimizer = optim.Adam([numerator_weights, denominator_weights], lr=0.001)
-    scaler = torch.cuda.amp.GradScaler()  # Initialize GradScaler for handling mixed precision
+    scaler = torch.cuda.amp.GradScaler()
 
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    torch.cuda.reset_peak_memory_stats()
     total_time = 0
     start_time = time.time()
 
     for _ in range(100):
-        with torch.cuda.amp.autocast(dtype=torch.float16):  # Automatic mixed precision context
-            print(x.dtype, numerator_weights.dtype, denominator_weights.dtype)
+        with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
             output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
             loss = loss_fn(expected_output, output)
+            print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
 
-        optimizer.zero_grad()  # Reset gradients to zero to prevent accumulation
-        scaler.scale(loss).backward()  # Scale loss then backpropagate gradients
-        scaler.step(optimizer)  # Apply scaled gradients to update weights
-        scaler.update()  # Update the scaler for next iteration
-        if _ % 10 == 0:
-            print("Loss:", loss.item())
+        print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
+        optimizer.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
-        torch.cuda.synchronize()  # Ensure all CUDA operations are completed
+        torch.cuda.synchronize()
         total_time += time.time() - start_time
-        start_time = time.time()  # Reset start time for the next iteration
+        start_time = time.time()
 
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
     average_time = total_time / 100
     print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 
