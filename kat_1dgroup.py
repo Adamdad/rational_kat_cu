@@ -130,7 +130,7 @@ if __name__=="__main__":
     y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
     # plot y vs x
     import matplotlib.pyplot as plt
-    plt.plot(x.detach().numpy(), y.detach().numpy())
+    plt.plot(x.detach().cpu().numpy(), y.detach().cpu().numpy())
     plt.savefig("kat_1dgroup.png")
     
 
