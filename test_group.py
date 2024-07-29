@@ -178,16 +178,18 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     print("Benchmarking forward pass")
     B, L, D = x.shape
     used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
         result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
         torch.cuda.synchronize()
         used_time += time.time() - start
-
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
     used_time /= 100
-    print("Time taken for loop forward pass: {:.4f} seconds".format(used_time))
+    print("Time taken for loop forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
     
     used_time = 0
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
         result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
@@ -195,7 +197,8 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
         used_time += time.time() - start
 
     used_time /= 100
-    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time))
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
+    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
     
     print("#"*50)
     return result
