@@ -68,8 +68,8 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     dim3 blockSize(threads_per_block, 1, 1);
     dim3 numBlocks(B, L, blocks_per_group);
 
-    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_by_group", ([&] {
-    rational_fwd_cuda_kernel_1d_by_group<scalar_t>
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_1dgroup", ([&] {
+    rational_fwd_cuda_kernel_1dgroup<scalar_t>
         <<<numBlocks, blockSize>>>(
             x.data_ptr<scalar_t>(),
             a.data_ptr<scalar_t>(),
