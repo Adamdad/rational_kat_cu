@@ -109,7 +109,6 @@ class KAT_1DGroup(nn.Module):
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
             weight_denominator = torch.cat([weight_denominator]*self.num_groups).view(self.num_groups, -1)
         
-        
         self.weight_numerator.data = weight_numerator
         self.weight_denominator.data = weight_denominator
 
@@ -125,9 +124,11 @@ if __name__=="__main__":
     model = KAT_1DGroup()
     x = torch.linspace(-2, 2, 100)
     
-    # y = model(x)
+    x = x.unsqueeze(0).unsqueeze(0)
+    print(x.shape)
+    y = model(x)
     # y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
-    y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
+    # y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
     # plot y vs x
     import matplotlib.pyplot as plt
     plt.plot(x.detach().cpu().numpy(), y.detach().cpu().numpy())
