@@ -390,8 +390,8 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         shared_b[threadIdx.x] = b[threadIdx.x];
     }
 
-    double local_da[6] = {0}; // Local accumulation arrays
-    double local_db[4] = {0};
+    scalar_t local_da[6] = {0}; // Local accumulation arrays
+    scalar_t local_db[4] = {0};
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < x_size) {
