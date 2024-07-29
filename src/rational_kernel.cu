@@ -362,6 +362,18 @@ __global__ void rational_bwd_cuda_kernel_optimized(
     
     __shared__ double sda[6];
     __shared__ double sdb[4];
+    if (threadIdx.x == 0) {
+        sda[0] = 0;
+        sda[1] = 0;
+        sda[2] = 0;
+        sda[3] = 0;
+        sda[4] = 0;
+        sda[5] = 0;
+        sdb[0] = 0;
+        sdb[1] = 0;
+        sdb[2] = 0;
+        sdb[3] = 0;
+    }
 
     __shared__ scalar_t shared_a[6];
     __shared__ scalar_t shared_b_abs[4];
