@@ -259,7 +259,7 @@ if __name__=="__main__":
                 1.6561610853276082e-10], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
-    x = torch.randn(1024, 10, 640, dtype=torch.float32, device='cuda')
+    x = torch.rand(1024, 10, 640, dtype=torch.float32, device='cuda')
     
     
     test_forward(x, numerator_weights, denominator_weights)
