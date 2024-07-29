@@ -62,7 +62,7 @@ def Rational_CUDA_A_F(x, weight_numerator, weight_denominator):
 
     return numerator.div(denominator).view(x.shape)  # Reshape result to match input shape
 
-class My_rational_1dgroup(torch.autograd.Function):
+class rational_1dgroup(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, weight_numerator, weight_denominator, group):
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
@@ -75,6 +75,19 @@ class My_rational_1dgroup(torch.autograd.Function):
         x, w_numerator, w_denominator = ctx.saved_tensors
         group = ctx.group
         d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, x, w_numerator, w_denominator, group)
+        return d_x, d_weight_numerator, d_weight_denominator, None
+    
+class rational(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, weight_numerator, weight_denominator):
+        ctx.save_for_backward(input, weight_numerator, weight_denominator)
+        x = kat_rational.rational_fwd_optimized(input, weight_numerator, weight_denominator)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, w_numerator, w_denominator = ctx.saved_tensors
+        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_optimized(grad_output, x, w_numerator, w_denominator)
         return d_x, d_weight_numerator, d_weight_denominator, None
     
 class KAT_1DGroup(nn.Module):
@@ -101,20 +114,24 @@ class KAT_1DGroup(nn.Module):
         self.weight_denominator.data = weight_denominator
 
     def forward(self, input):
-        return My_rational_1dgroup.apply(input, self.weight_numerator, self.weight_denominator, self.num_groups)
+        return rational_1dgroup.apply(input, self.weight_numerator, self.weight_denominator, self.num_groups)
     
     def extra_repr(self):
         return f'num_groups={self.num_groups}, order={self.order}'
     
+
+    
 if __name__=="__main__":
     model = KAT_1DGroup()
-    x = torch.linspace(-1, 1, 100)
+    x = torch.linspace(-2, 2, 100)
     # y = model(x)
-    y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
+    # y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
+    y = rational.apply(x, model.weight_numerator[0], model.weight_denominator[0])
     # plot y vs x
     import matplotlib.pyplot as plt
     plt.plot(x.detach().numpy(), y.detach().numpy())
     plt.savefig("kat_1dgroup.png")
+    
 
     
     
