@@ -30,13 +30,13 @@ class KAT_1DGroup(nn.Module):
         self.initialize(mode = init_mode)
         
     def initialize(self, mode="gelu"):
-        print(os.path.realpath(__file__))
         cfd = os.path.dirname(os.path.realpath(__file__))
         with open(f'{cfd}/init.json') as json_file:
             data = json.load(json_file)
             weight_numerator = torch.tensor(data[mode]["init_w_numerator"])
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
         
+        print(weight_denominator, weight_numerator)
         self.weight_numerator.data = weight_numerator
         self.weight_denominator.data = weight_denominator
 
