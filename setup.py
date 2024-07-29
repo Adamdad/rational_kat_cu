@@ -8,12 +8,14 @@ sources = glob.glob('src/*.cpp')+glob.glob('src/*.cu')
 
 
 setup(
-    name='my_lib',
-    version='0.1',
-    author='adamdad',
-    author_email='yxy_adadm@qq.com',
-    description='A test project',
-    long_description='',
+    name='kat_rational',  # Name of the package
+    version='0.1',  # Version of the package
+    author='adamdad',  # Name of the author
+    author_email='yxy_adadm@qq.com',  # Contact email of the author
+    description='A simple example of a PyTorch extension, implementing a group-wise rational function for kat',  # Short description
+    long_description="""This package provides a PyTorch extension for computing group-wise rational functions. 
+                        It is designed to be used as part of the 'kat' project, enhancing its capabilities in handling
+                        specialized mathematical functions with optimized CUDA support.""",  # Detailed description
     ext_modules=[
         CUDAExtension(name='my_lib', 
                       sources=sources
