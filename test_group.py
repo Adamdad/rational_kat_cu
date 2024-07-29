@@ -128,6 +128,7 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     Returns:
     - torch.Tensor: The result tensor of shape (B, L, D).
     """
+    print(x.shape, weights_numerator.shape, weights_denominator.shape)
     D_per_group = D // group
     results = []
 
