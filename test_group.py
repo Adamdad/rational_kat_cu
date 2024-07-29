@@ -219,7 +219,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
 
     used_time /= 100
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
-    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
+    print("Time taken for cuda forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
     
     print("#"*50)
     return result
