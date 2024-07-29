@@ -375,7 +375,6 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         sdb[3] = 0;
     }
     
-    __syncthreads();
 
     __shared__ scalar_t shared_a[6];
     __shared__ scalar_t shared_b_abs[4];
@@ -391,6 +390,8 @@ __global__ void rational_bwd_cuda_kernel_optimized(
         shared_b[threadIdx.x] = b[threadIdx.x];
         shared_b_abs[threadIdx.x] = abs(shared_b[threadIdx.x]);
     }
+
+    __syncthreads();
 
     scalar_t local_da[6] = {0}; // Local accumulation arrays
     scalar_t local_db[4] = {0};
