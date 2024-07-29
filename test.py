@@ -110,8 +110,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, output)
     loss.backward()
-    torch_grad_n = numerator_weights.grad
-    torch_grad_d = denominator_weights.grad
+    torch_grad_n = numerator_weights.grad.clone()
+    torch_grad_d = denominator_weights.grad.clone()
     
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
@@ -119,8 +119,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     my_output = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
-    my_grad_n = numerator_weights.grad
-    my_grad_d = denominator_weights.grad
+    my_grad_n = numerator_weights.grad.clone()
+    my_grad_d = denominator_weights.grad.clone()
     
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
@@ -128,8 +128,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     off_output = My_rational.apply(x, numerator_weights, denominator_weights)
     loss = loss_fn(expected_output, off_output)
     loss.backward()
-    off_grad_n = numerator_weights.grad
-    off_grad_d = denominator_weights.grad
+    off_grad_n = numerator_weights.grad.clone()
+    off_grad_d = denominator_weights.grad.clone()
     
     print("torch_grad_n", torch_grad_n)
     print("my_grad_n", my_grad_n)
