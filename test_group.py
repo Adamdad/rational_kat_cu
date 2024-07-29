@@ -53,12 +53,10 @@ def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator, group):
     z = z.view(group, B * L * D_per_group)  # Flatten for group-wise operation
 
     # Generate powers of z for polynomial terms, assuming _get_xps function supports batched operation
-    xps = _get_xps(z, len_num, len_deno)  # Should output shape: (group, B * L * D_per_group, max(len_num, len_deno))
+    xps = _get_xps(z, len_num, len_deno).permute(0, 2, 1)  # Should output shape: (group, B * L * D_per_group, max(len_num, len_deno))
 
-    print("xps.shape", xps.shape)
-    print("weight_numerator.shape", weight_numerator.shape)
     # Compute numerator as a dot product of powers of z and weights
-    numerator = torch.bmm(weight_numerator.unsqueeze(1), xps.transpose(1, 2)).squeeze(1)  # Shape: (group, B * L * D_per_group)
+    numerator = torch.bmm(weight_numerator.unsqueeze(1), xps).squeeze(1)  # Shape: (group, B * L * D_per_group)
 
     # Compute denominator similarly, considering absolute values
     expanded_dw = torch.cat([
@@ -67,7 +65,7 @@ def Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator, group):
         torch.zeros(group, max(0, len_num - len_deno - 1), device=device)  # Pad with zeros if numerator degree is higher
     ], dim=1)
 
-    denominator = torch.bmm(expanded_dw.abs().unsqueeze(1), xps.transpose(1, 2)).squeeze(1)  # Shape: (group, B * L * D_per_group)
+    denominator = torch.bmm(expanded_dw.abs().unsqueeze(1), xps).squeeze(1)  # Shape: (group, B * L * D_per_group)
 
     # Compute the rational function result
     result = numerator.div(denominator)
