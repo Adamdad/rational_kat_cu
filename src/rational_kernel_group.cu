@@ -99,10 +99,13 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     double* __restrict__ d_a,
     double* __restrict__ d_b,
     int B, int L, int D, int group, 
-    int x_size, int D_per_group) {
+    int x_size, 
+    const int n_size, 
+    const int d_size,
+    int D_per_group) {
     
-    __shared__ double sda[6 * group];
-    __shared__ double sdb[4 * group];
+    __shared__ double sda[n_size];
+    __shared__ double sdb[d_size];
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -206,10 +209,10 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
 
     // Only one thread writes back to global memory
     if (threadIdx.x == 0) {
-        for (int i = 0; i < 6 * group; ++i) {
+        for (int i = 0; i < n_size; ++i) {
             atomicAdd(&d_a[i], sda[i]);
         }
-        for (int i = 0; i < 4 * group; ++i) {
+        for (int i = 0; i < d_size; ++i) {
             atomicAdd(&d_b[i], sdb[i]);
         }
     }
@@ -217,6 +220,9 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
 
 std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d, int group) {
     const int x_size = x.numel();
+    const int n_size = n.numel();
+    const int d_size = d.numel();
+
     auto d_x = at::empty_like(x);
     auto d_n = at::zeros_like(n).toType(at::kDouble);
     auto d_d = at::zeros_like(d).toType(at::kDouble);
@@ -238,7 +244,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
             d_x.data_ptr<scalar_t>(),
             d_n.data_ptr<double>(),
             d_d.data_ptr<double>(),
-            B, L, D, group, x_size, D / group);
+            B, L, D, group, x_size, n_size, d_size, D / group);
     }));
 
     return {d_x, d_n.toType(at::kFloat), d_d.toType(at::kFloat)};
