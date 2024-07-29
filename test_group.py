@@ -137,7 +137,7 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
         start_idx = g * D_per_group
         end_idx = start_idx + D_per_group
         x_group = x[:, :, start_idx:end_idx]
-        print(x_group.shape)
+        x_group = x_group.contiguous()
 
         # Compute the rational function for the current group
         result_group = Rational_CUDA_A_F(x_group, weights_numerator[g], weights_denominator[g])
