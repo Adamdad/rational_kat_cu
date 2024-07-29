@@ -202,6 +202,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
 
     # Perform the rational function computation
     output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    print("torch output", output)
     loss = loss_fn(expected_output, output)
     loss.backward()
     torch_grad_n = numerator_weights.grad
@@ -211,6 +212,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     denominator_weights.grad.zero_()
     
     my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+    print("my output", my_output)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = numerator_weights.grad
