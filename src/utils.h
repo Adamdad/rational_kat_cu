@@ -24,6 +24,18 @@ torch::Tensor rational_fwd_cuda_optimized(
   torch::Tensor n, 
   torch::Tensor d);
 
+torch::Tensor rational_fwd_1dgroup(
+  torch::Tensor x, 
+  torch::Tensor n, 
+  torch::Tensor d, 
+  int group);
+
+torch::Tensor rational_fwd_cuda_1dgroup(
+  torch::Tensor x, 
+  torch::Tensor n, 
+  torch::Tensor d, 
+  int group);
+
 std::vector<torch::Tensor> rational_bwd(
   torch::Tensor dy, 
   torch::Tensor x, 
@@ -47,4 +59,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_optimized(
     torch::Tensor x, 
     torch::Tensor n, 
     torch::Tensor d);
+
+
+
 
