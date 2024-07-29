@@ -17,19 +17,15 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     // Calculate the group index based on the position within dimension D
     int g_index = d_index / D_per_group;
 
-    // Load shared memory for coefficients, specific to the group
-    __shared__ scalar_t s_a[6];
-    __shared__ scalar_t s_b[4];
+    scalar_t s_a[6];
+    scalar_t s_b[4];
+    for (int i = 0; i < 6; ++i) {
+        s_a[i] = a[g_index * 6 + i];
+    }
 
-    // Load 'a' coefficients into shared memory for this group
-    if (threadIdx.x < 6) {
-        s_a[threadIdx.x] = a[g_index * 6 + threadIdx.x];
+    for (int i = 0; i < 4; ++i) {
+        s_b[i] = b[g_index * 4 + i];
     }
-    // Load 'b' coefficients and their absolute values into shared memory
-    if (threadIdx.x < 4) {
-        s_b[threadIdx.x] = abs(b[g_index * 4 + threadIdx.x]);
-    }
-    __syncthreads();
 
     // Obtain the input value from the tensor
     scalar_t xp1 = x[idx];
