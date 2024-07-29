@@ -124,9 +124,10 @@ class KAT_1DGroup(nn.Module):
 if __name__=="__main__":
     model = KAT_1DGroup()
     x = torch.linspace(-2, 2, 100)
+    
     # y = model(x)
     # y = Rational_CUDA_A_F(x, model.weight_numerator[0], model.weight_denominator[0])
-    y = rational.apply(x, model.weight_numerator[0], model.weight_denominator[0])
+    y = rational.apply(x.cuda(), model.weight_numerator[0].cuda(), model.weight_denominator[0].cuda())
     # plot y vs x
     import matplotlib.pyplot as plt
     plt.plot(x.detach().numpy(), y.detach().numpy())
