@@ -106,6 +106,17 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     
     __shared__ double sda[24];
     __shared__ double sdb[16];
+    // initialize shared memory to zero
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < n_size; ++i) {
+            sda[i] = 0;
+        }
+        for (int i = 0; i < d_size; ++i) {
+            sdb[i] = 0;
+        }
+    }
+
+    __syncthreads();
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -129,8 +140,8 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
         shared_b_abs[i] = abs(b[b_idx + i]);  // Store absolute values directly if needed
     }
 
-    double local_da[6] = {0}; // Local accumulation arrays
-    double local_db[4] = {0};
+    scalar_t local_da[6] = {0}; // Local accumulation arrays
+    scalar_t local_db[4] = {0};
     
     scalar_t xp = x[idx];
     scalar_t axp = abs(xp);
@@ -145,9 +156,9 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     // Compute powers of axp
     scalar_t axp_powers[4];
     axp_powers[0] = axp;
-    axp_powers[1] = abs(xp_powers[1]); // axp^2
-    axp_powers[2] = abs(xp_powers[2]); // axp^3
-    axp_powers[3] = abs(xp_powers[3]); // axp^4
+    axp_powers[1] = axp * axp_powers[0]; // axp^2
+    axp_powers[2] = axp * axp_powers[1]; // axp^3
+    axp_powers[3] = axp * axp_powers[2]; // axp^4
 
     // Compute absolute values once
 
@@ -158,43 +169,41 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     + shared_a[4] * xp_powers[3] 
     + shared_a[5] * xp_powers[4];
 
-    scalar_t Q = 1.0 
+    scalar_t Q = scalar_t(1.0)
     + shared_b_abs[0] * axp_powers[0] 
     + shared_b_abs[1] * axp_powers[1] 
     + shared_b_abs[2] * axp_powers[2] 
     + shared_b_abs[3] * axp_powers[3];
+
+
+    scalar_t R = shared_a[1] 
+    + scalar_t(2.0) * shared_a[2] * xp_powers[0] 
+    + scalar_t(3.0) * shared_a[3] * xp_powers[1] 
+    + scalar_t(4.0) * shared_a[4] * xp_powers[2] 
+    + scalar_t(5.0) * shared_a[5] * xp_powers[3];
+
+    scalar_t S = copysign(scalar_t(1.0), xp) * (shared_b_abs[0] 
+    + scalar_t(2.0) * shared_b_abs[1] * axp_powers[0] 
+    + scalar_t(3.0) * shared_b_abs[2] * axp_powers[1] 
+    + scalar_t(4.0) * shared_b_abs[3] * axp_powers[2]);
     
-    scalar_t Q_inv = 1.0 / Q;
-    scalar_t Q_inv2 = Q_inv * Q_inv;
 
     scalar_t grad_o = grad_output[idx];
     
-    scalar_t R = shared_a[1] 
-    + 2.0 * shared_a[2] * xp_powers[0] 
-    + 3.0 * shared_a[3] * xp_powers[1] 
-    + 4.0 * shared_a[4] * xp_powers[2] 
-    + 5.0 * shared_a[5] * xp_powers[3];
+    scalar_t mpq2 = -P/(Q*Q);
 
-    scalar_t S = copysign(1.0, xp) * (shared_b_abs[0] 
-    + 2.0 * shared_b_abs[1] * axp_powers[0] 
-    + 3.0 * shared_b_abs[2] * axp_powers[1] 
-    + 4.0 * shared_b_abs[3] * axp_powers[2]);
-
-    scalar_t d_i_x = (R * Q_inv + S * (-P * Q_inv2)) * grad_o;
+    scalar_t d_i_x = (R / Q + S * mpq2) * grad_o;
     d_x[idx] = d_i_x;
 
-    // Precompute common factors outside the loops
-    scalar_t common_factor_da = Q_inv * grad_o;
-    scalar_t common_factor_db = (-P * Q_inv2) * grad_o;
-
     // Loop for computing d_a contributions
-    for (int i = 0; i < 6; ++i) {
-        local_da[i] += xp_powers[i] * common_factor_da;
+    local_da[0] = scalar_t(1.0) / Q * grad_o;
+    for (int i = 1; i < 6; ++i) {
+        local_da[i] = (xp_powers[i-1] / Q) * grad_o;
     }
 
     // Loop for computing d_b contributions
     for (int i = 0; i < 4; ++i) {
-        local_db[i] += copysign(1.0, b[i]) * axp_powers[i] * common_factor_db;
+        local_db[i] = mpq2 * copysign(scalar_t(1.0), shared_b[i]) * axp_powers[i] * grad_o;
     }
 
     // Reduce local arrays to shared memory
