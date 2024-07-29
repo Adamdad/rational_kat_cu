@@ -24,7 +24,7 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     __shared__ scalar_t s_b[4];
 
     if (threadIdx.x < 6) {
-        s_a[threadIdx.x] = a[g_index * 5 + threadIdx.x];
+        s_a[threadIdx.x] = a[g_index * 6 + threadIdx.x];
     }
     if (threadIdx.x < 4) {
         s_b[threadIdx.x] = abs(b[g_index * 4 + threadIdx.x]);
