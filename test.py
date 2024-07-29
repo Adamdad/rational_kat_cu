@@ -93,6 +93,8 @@ def test_forward(x, numerator_weights, denominator_weights):
     result = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
 
     my_results = My_rational_optimized.apply(x, numerator_weights, denominator_weights)
+    print("result", result)
+    print("my_results", my_results)
 
     # Check if the results match
     assert torch.allclose(result, my_results)
@@ -259,7 +261,7 @@ if __name__=="__main__":
                 1.6561610853276082e-10], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
-    x = torch.rand(1024, 10, 640, dtype=torch.float32, device='cuda')
+    x = torch.randn(1024, 10, 640, dtype=torch.float32, device='cuda')
     
     
     test_forward(x, numerator_weights, denominator_weights)
