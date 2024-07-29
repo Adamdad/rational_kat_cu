@@ -203,7 +203,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
 
     for _ in range(100):
         with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-            output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+            output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
             loss = loss_fn(expected_output, output)
             print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
 
