@@ -176,11 +176,11 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
     print("Benchmarking forward pass")
-    
+    B, L, D = x.shape
     used_time = 0
     for _ in range(100):
         start = time.time()
-        result = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
+        result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
         torch.cuda.synchronize()
         used_time += time.time() - start
 
@@ -216,7 +216,7 @@ if __name__=="__main__":
     # denominator_weights = nn.Parameter(torch.tensor([1.0, 2.0, 3.0, 4.0], dtype=torch.float32, device='cuda'), requires_grad=True)
 
     # Input tensor
-    x = torch.rand(1024, 77, 640, dtype=torch.float32, device='cuda')
+    x = torch.rand(128, 77, 640, dtype=torch.float32, device='cuda')
     benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     
     
