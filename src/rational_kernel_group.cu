@@ -2,52 +2,53 @@
 
 template <typename scalar_t>
 __global__ void rational_fwd_cuda_kernel_1dgroup(
-    const scalar_t* __restrict__ x, 
-    const scalar_t* __restrict__ a,
-    const scalar_t* __restrict__ b, 
-    scalar_t* __restrict__ result, 
+    torch::PackedTensorAccessor32<scalar_t,3,torch::RestrictPtrTraits> x_acc, 
+    torch::PackedTensorAccessor32<scalar_t,2,torch::RestrictPtrTraits> a_acc,
+    torch::PackedTensorAccessor32<scalar_t,2,torch::RestrictPtrTraits> b_acc, 
+    torch::PackedTensorAccessor32<scalar_t,3,torch::RestrictPtrTraits> result_acc,
     int B, int L, int D, int group) {
 
     int D_per_group = D / group;
+    
+    int d_index = threadIdx.z + blockIdx.z * blockDim.z; // D dimension
 
     // Calculate the group index based on the third dimension
-    int g_index = (blockIdx.z * blockDim.z + threadIdx.z) / D_per_group;
-    int group_offset = g_index * D_per_group;
+    int g_index = d_index / D_per_group;
 
     // Use shared memory for coefficients
     __shared__ scalar_t s_a[5];
     __shared__ scalar_t s_b[4];
 
     if (threadIdx.z < 5) {
-        s_a[threadIdx.z] = a[g_index * 5 + threadIdx.z];
+        s_a[threadIdx.z] = a_acc[g_index][threadIdx.z];
     }
     if (threadIdx.z < 4) {
-        s_b[threadIdx.z] = abs(b[g_index * 4 + threadIdx.z]);
+        s_b[threadIdx.z] = abs(b_acc[g_index][threadIdx.z]);
     }
     __syncthreads();
 
     int b_index = blockIdx.x; // B dimension
     int l_index = blockIdx.y; // L dimension
-    int d_index = threadIdx.z + blockIdx.z * blockDim.z; // D dimension
+
 
     if (d_index < D) {
-        scalar_t xp1 = x[b_index * (L * D) + l_index * D + d_index];
+        scalar_t xp1 = x_acc[b_index][l_index][d_index];
         scalar_t abs_xp1 = abs(xp1);
 
         // Compute the polynomial for P using Horner's method
         scalar_t P = s_a[4];
         for (int i = 3; i >= 0; --i) {
-            P = fmaf(P, xp1, s_a[i]);  // using FMA
+            P = fmaf(P, xp1, s_a[i]);
         }
         
         // Compute the polynomial for Q using Horner's method
         scalar_t Q = s_b[3];
         for (int i = 2; i >= 0; --i) {
-            Q = fmaf(Q, abs_xp1, s_b[i]);  // using FMA
+            Q = fmaf(Q, abs_xp1, s_b[i]);
         }
         Q = fmaf(Q, abs_xp1, 1.0);
 
-        result[b_index * (L * D) + l_index * D + d_index] = P / Q;
+        result_acc[b_index][l_index][d_index] = P / Q;
     }
 }
 
@@ -57,7 +58,7 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     torch::Tensor d,
     int group
     ){
-    auto result = at::empty_like(x);
+    auto result = torch::empty_like(x);
     const int B = x.size(0);
     const int L = x.size(1);
     const int D = x.size(2);
@@ -69,14 +70,15 @@ torch::Tensor rational_fwd_cuda_1dgroup(
     dim3 numBlocks(B, L, blocks_per_group);
 
     AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "rational_fwd_cuda_1dgroup", ([&] {
-    rational_fwd_cuda_kernel_1dgroup<scalar_t>
-        <<<numBlocks, blockSize>>>(
-            x.data_ptr<scalar_t>(),
-            n.data_ptr<scalar_t>(),
-            d.data_ptr<scalar_t>(),
-            result.data_ptr<scalar_t>(),
-            B, L, D, group);
-        }));
+        auto x_acc = x.packed_accessor32<scalar_t,3,torch::RestrictPtrTraits>();
+        auto n_acc = n.packed_accessor32<scalar_t,2,torch::RestrictPtrTraits>();
+        auto d_acc = d.packed_accessor32<scalar_t,2,torch::RestrictPtrTraits>();
+        auto result_acc = result.packed_accessor32<scalar_t,3,torch::RestrictPtrTraits>();
+
+        rational_fwd_cuda_kernel_1dgroup<scalar_t>
+            <<<numBlocks, blockSize>>>(
+                x_acc, n_acc, d_acc, result_acc, B, L, D, group);
+    }));
 
     return result;
 }
