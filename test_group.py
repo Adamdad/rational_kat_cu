@@ -218,6 +218,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     
     print("Torch grad numerator:", torch_grad_n)
     print("My grad numerator:", my_grad_n)
+    print("Torch grad denominator:", torch_grad_d)
+    print("My grad denominator:", my_grad_d)
     
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
