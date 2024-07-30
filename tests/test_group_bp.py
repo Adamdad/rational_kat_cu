@@ -261,11 +261,12 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
 def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4):
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
-    optimizer = optim.Adam([numerator_weights, denominator_weights], lr=0.001)
+    
     scaler = torch.cuda.amp.GradScaler()
     model = Rational().cuda()
     model.numerator.data = numerator_weights[0]
     model.denominator.data = denominator_weights[0]
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     torch.cuda.reset_peak_memory_stats()
     total_time = 0
