@@ -174,19 +174,19 @@ def test_vectorized_forward(x, numerator_weights, denominator_weights, group_siz
 
 def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
+    act = Rational(approx_func="gelu")
+    
     print("Testing forward pass")
     # Perform the rational function computation
     # loop_results = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
     
     vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    
+    rational_output = act(x)
 
     my_results = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
-    print("My results shape:", my_results.shape)
-    print(my_results[0])
-    
-    print("Vectorized results shape:", vector_result.shape)
-    print(vector_result[0])
-    
+
+    assert my_results == rational_output, "Output mismatch"    
     assert torch.allclose(vector_result[0], my_results[0]), "First element mismatch"
     assert torch.allclose(vector_result[:, 1], my_results[:,1]), "Second element mismatch"
     assert torch.allclose(vector_result[:, :, 0], my_results[:,:, 0]), "Third element mismatch"
@@ -383,16 +383,16 @@ if __name__=="__main__":
                 0.03746682605496631,
                 1.6561610853276082e-10
             ]], dtype=torch.float32, device='cuda'), requires_grad=True)
-    numerator_weights.data[1] *= 2
-    numerator_weights.data[2] *= 3
-    numerator_weights.data[3] *= 4
+    # numerator_weights.data[1] *= 2
+    # numerator_weights.data[2] *= 3
+    # numerator_weights.data[3] *= 4
 
     # Input tensor
     x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
-    # test_forward(x, numerator_weights, denominator_weights, group_size)
+    test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
-    test_backward(x, numerator_weights, denominator_weights, group_size)
-    benchmark_backward(x, numerator_weights, denominator_weights, group_size)
+    # test_backward(x, numerator_weights, denominator_weights, group_size)
+    # benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
     
     
