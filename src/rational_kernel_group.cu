@@ -210,23 +210,23 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     }
 
     // Reduce local arrays to shared memory
-    for (int i = 0; i < 6; ++i) {
-        atomicAdd(&sda[a_idx + i], local_da[i]);
-    }
-    for (int i = 0; i < 4; ++i) {
-        atomicAdd(&sdb[b_idx + i], local_db[i]);
-    }
+    // for (int i = 0; i < 6; ++i) {
+    //     atomicAdd(&sda[a_idx + i], local_da[i]);
+    // }
+    // for (int i = 0; i < 4; ++i) {
+    //     atomicAdd(&sdb[b_idx + i], local_db[i]);
+    // }
 
     __syncthreads();
 
     // Only one thread writes back to global memory
     if (threadIdx.x == 0) {
-        // for (int i = 0; i < n_size; ++i) {
-        //     atomicAdd(&d_a[i], sda[i]);
-        // }
-        // for (int i = 0; i < d_size; ++i) {
-        //     atomicAdd(&d_b[i], sdb[i]);
-        // }
+        for (int i = 0; i < n_size; ++i) {
+            atomicAdd(&d_a[i], sda[i]);
+        }
+        for (int i = 0; i < d_size; ++i) {
+            atomicAdd(&d_b[i], sdb[i]);
+        }
     }
 }
 
