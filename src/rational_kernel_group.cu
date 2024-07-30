@@ -243,7 +243,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
     int L = x.size(1);
     int D = x.size(2);
 
-    int blockSize = 256;  // You might want to experiment with this value
+    int blockSize = 128;  // You might want to experiment with this value
     int numBlocks = (x_size + blockSize - 1) / blockSize;
 
     AT_DISPATCH_FLOATING_TYPES_AND_HALF(x.scalar_type(), "rational_bwd_cuda_1dgroup", ([&] {
