@@ -235,7 +235,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
     const int n_size = n.numel();
     const int d_size = d.numel();
 
-    auto d_x = at::empty_like(x);
+    auto d_x = at::empty_like(x).toType(at::kFloat);
     auto d_n = at::zeros_like(n).toType(at::kFloat);
     auto d_d = at::zeros_like(d).toType(at::kFloat);
 
@@ -253,7 +253,7 @@ std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, 
             x.data_ptr<scalar_t>(),
             n.data_ptr<scalar_t>(),
             d.data_ptr<scalar_t>(),
-            d_x.data_ptr<scalar_t>(),
+            d_x.data_ptr<float>(),
             d_n.data_ptr<float>(),
             d_d.data_ptr<float>(),
             B, L, D, group, x_size, n_size, d_size, D / group);
