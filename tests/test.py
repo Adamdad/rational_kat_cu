@@ -135,9 +135,17 @@ def test_backward(x, numerator_weights, denominator_weights):
     loss.backward()
     off_grad_n = numerator_weights.grad.clone()
     off_grad_d = denominator_weights.grad.clone()
+    
+    print("my_grad_n", my_grad_n)
+    print("torch_grad_n", torch_grad_n)
+    print("off_grad_n", off_grad_n)
+    print("my_grad_d", my_grad_d)
+    print("torch_grad_d", torch_grad_d)
+    print("off_grad_d", off_grad_d)
 
-    assert torch.allclose(torch_grad_n, off_grad_n), "Numerator gradients do not match"
-    assert torch.allclose(torch_grad_d, off_grad_d), "Denominator gradients do not match"    
+
+    assert torch.allclose(my_grad_n, off_grad_n), "Numerator gradients do not match"
+    assert torch.allclose(my_grad_d, off_grad_d), "Denominator gradients do not match"    
     # Check if the results match
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradients do not match"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradients do not match"
