@@ -104,8 +104,10 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     const int d_size,
     int D_per_group) {
     
-    __shared__ float sda[24];
-    __shared__ float sdb[16];
+    // Shared memory for accumulation
+    // group < 32
+    __shared__ float sda[192];
+    __shared__ float sdb[128];
     // initialize shared memory to zero
     if (threadIdx.x == 0) {
         for (int i = 0; i < n_size; ++i) {
