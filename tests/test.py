@@ -111,8 +111,11 @@ def test_backward(x, numerator_weights, denominator_weights):
     act.numerator.date = numerator_weights.data.clone()
     act.denominator.data = denominator_weights.data.clone()
     
-    print(act.numerator, act.denominator)
-    print(numerator_weights, denominator_weights)
+    print(act.numerator)
+    print(act.denominator)
+    print(numerator_weights)
+    print(denominator_weights)
+    assert torch.allclose(act.numerator, numerator_weights), "Numerator weights do not match"
 
     # Perform the rational function computation
     output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
