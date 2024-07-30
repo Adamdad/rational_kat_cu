@@ -177,12 +177,12 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     act = Rational(approx_func="gelu").cuda()
     act.numerator.data = numerator_weights[0]
     act.denominator.data = denominator_weights[0]
-    
+    B, L, D = x.shape
     print("Testing forward pass")
     # Perform the rational function computation
-    # loop_results = process_groups(1024, 77, 640, group_size, x, numerator_weights, denominator_weights)
+    vector_result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
     
-    vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+    # vector_result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
     
     rational_output = act(x)
 
