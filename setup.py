@@ -18,7 +18,6 @@ setup(
     ext_modules=[
         CUDAExtension(name='kat_rational', 
                       sources=sources,
-                      extra_compile_args={'cxx': ['-g', '-O2'], 'nvcc': ['-O2']}
                       )
     ],
     cmdclass={'build_ext': BuildExtension}
