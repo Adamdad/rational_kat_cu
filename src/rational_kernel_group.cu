@@ -149,22 +149,19 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     scalar_t xp = x[idx];
     scalar_t axp = abs(xp);
     // Compute powers of xp
-    // scalar_t xp_powers[5];
-    // xp_powers[0] = xp;
-    // xp_powers[1] = xp * xp_powers[0]; // xp^2
-    // xp_powers[2] = xp * xp_powers[1]; // xp^3
-    // xp_powers[3] = xp * xp_powers[2]; // xp^4
-    // xp_powers[4] = xp * xp_powers[3]; // xp^5
+    scalar_t xp_powers[5];
+    xp_powers[0] = xp;
+    xp_powers[1] = xp * xp_powers[0]; // xp^2
+    xp_powers[2] = xp * xp_powers[1]; // xp^3
+    xp_powers[3] = xp * xp_powers[2]; // xp^4
+    xp_powers[4] = xp * xp_powers[3]; // xp^5
 
-    // // Compute powers of axp
-    // scalar_t axp_powers[4];
-    // axp_powers[0] = axp;
-    // axp_powers[1] = axp * axp_powers[0]; // axp^2
-    // axp_powers[2] = axp * axp_powers[1]; // axp^3
-    // axp_powers[3] = axp * axp_powers[2]; // axp^4
-
-    scalar_t xp_powers[5] = {xp, xp*xp, xp*xp*xp, xp*xp*xp*xp, xp*xp*xp*xp*xp};
-    scalar_t axp_powers[4] = {axp, axp*axp, axp*axp*axp, axp*axp*axp*axp};
+    // Compute powers of axp
+    scalar_t axp_powers[4];
+    axp_powers[0] = axp;
+    axp_powers[1] = axp * axp_powers[0]; // axp^2
+    axp_powers[2] = axp * axp_powers[1]; // axp^3
+    axp_powers[3] = axp * axp_powers[2]; // axp^4
 
     // Compute absolute values once
 
@@ -202,10 +199,9 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     d_x[idx] = d_i_x;
 
     // Loop for computing d_a contributions
-    scalar_t common1 = scalar_t(1.0) / Q * grad_o;
-    local_da[0] = common1;
+    local_da[0] = scalar_t(1.0) / Q * grad_o;
     for (int i = 1; i < 6; ++i) {
-        local_da[i] = xp_powers[i-1] * common1;
+        local_da[i] = (xp_powers[i-1] / Q) * grad_o;
     }
 
     // Loop for computing d_b contributions
