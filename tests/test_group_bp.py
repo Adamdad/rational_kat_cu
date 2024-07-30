@@ -294,7 +294,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 if __name__=="__main__":
     for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:
-        group_size = 1
+        group_size = 2
         # Define tensors for the numerator and denominator coefficients
         # numerator of size (group_size, 5) and denominator of size (group_size, 4)
         # numerator_weights = nn.Parameter(torch.tensor([
