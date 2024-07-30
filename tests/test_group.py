@@ -175,8 +175,8 @@ def test_vectorized_forward(x, numerator_weights, denominator_weights, group_siz
 def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
     act = Rational(approx_func="gelu").cuda()
-    act.numerator.data = numerator_weights
-    act.denominator.data = denominator_weights
+    act.numerator.data = numerator_weights[0]
+    act.denominator.data = denominator_weights[0]
     
     print("Testing forward pass")
     # Perform the rational function computation
