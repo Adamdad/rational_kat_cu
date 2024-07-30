@@ -263,7 +263,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     loss_fn = torch.nn.MSELoss(reduction='mean')
     
     scaler = torch.cuda.amp.GradScaler()
-    model = Rational().cuda()
+    model = Rational(approx_func="gelu").cuda()
     model.numerator.data = numerator_weights[0]
     model.denominator.data = denominator_weights[0]
     optimizer = optim.Adam(model.parameters(), lr=0.001)
