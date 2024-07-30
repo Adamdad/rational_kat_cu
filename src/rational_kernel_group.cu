@@ -221,10 +221,10 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
 
     // Only one thread writes back to global memory
     if (threadIdx.x == 0) {
-        for (int i = 0; i < n_size; ++i) {
+        for (int i = 0; i < 48; ++i) {
             atomicAdd(&d_a[i], sda[i]);
         }
-        for (int i = 0; i < d_size; ++i) {
+        for (int i = 0; i < 32; ++i) {
             atomicAdd(&d_b[i], sdb[i]);
         }
     }
