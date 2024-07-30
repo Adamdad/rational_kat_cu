@@ -174,7 +174,9 @@ def test_vectorized_forward(x, numerator_weights, denominator_weights, group_siz
 
 def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
-    act = Rational(approx_func="gelu")
+    act = Rational(approx_func="gelu").cuda()
+    act.numerator.data = numerator_weights
+    act.denominator.data = denominator_weights
     
     print("Testing forward pass")
     # Perform the rational function computation
@@ -186,6 +188,8 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
 
     my_results = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
 
+    print(rational_output)
+    print(my_results)
     assert my_results == rational_output, "Output mismatch"    
     assert torch.allclose(vector_result[0], my_results[0]), "First element mismatch"
     assert torch.allclose(vector_result[:, 1], my_results[:,1]), "Second element mismatch"
