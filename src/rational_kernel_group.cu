@@ -95,7 +95,7 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     const scalar_t* __restrict__ x,
     const scalar_t* __restrict__ a,
     const scalar_t* __restrict__ b,
-    scalar_t* __restrict__ d_x,
+    float* __restrict__ d_x,
     float* __restrict__ d_a,
     float* __restrict__ d_b,
     int B, int L, int D, int group, 
