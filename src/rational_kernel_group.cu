@@ -16,7 +16,7 @@ __global__ void rational_fwd_cuda_kernel_1dgroup(
     // Calculate the index within the dimension D
     int d_index = idx % D;
     // Calculate the group index based on the position within dimension D
-    int g_index = d_index / D_per_group;
+    int g_index = floor(d_index / D_per_group);
 
     // Calculate specific indices for a and b based on group
     int a_idx = g_index * 6;
@@ -127,7 +127,7 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     // Calculate the index within the dimension D
     int d_index = idx % D;
     // Calculate the group index based on the position within dimension D
-    int g_index = d_index / D_per_group;
+    int g_index = floor(d_index / D_per_group);
 
     // Calculate specific indices for a and b based on group
     int a_idx = g_index * 6;
