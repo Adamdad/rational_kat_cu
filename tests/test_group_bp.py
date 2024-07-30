@@ -258,8 +258,43 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     average_time = total_time / 100
     print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 
+def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4):
+    expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+    optimizer = optim.Adam([numerator_weights, denominator_weights], lr=0.001)
+    scaler = torch.cuda.amp.GradScaler()
+    model = Rational().cuda()
+    model.numerator.data = numerator_weights[0]
+    model.denominator.data = denominator_weights[0]
+
+    torch.cuda.reset_peak_memory_stats()
+    total_time = 0
+    start_time = time.time()
+
+    for _ in range(100):
+        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
+        # output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
+        output = model(x)
+        loss = loss_fn(expected_output, output)
+        # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
+
+        # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
+        optimizer.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+        if _ % 10 == 0:
+            print("Iteration:", _, "Loss:", loss.item())
+
+        torch.cuda.synchronize()
+        total_time += time.time() - start_time
+        start_time = time.time()
+
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    average_time = total_time / 100
+    print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 if __name__=="__main__":
-    for func in [benchmark_backward, benchmark_backward_torch]:
+    for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:
         group_size = 4
         # Define tensors for the numerator and denominator coefficients
         # numerator of size (group_size, 5) and denominator of size (group_size, 4)
