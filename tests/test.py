@@ -131,6 +131,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     denominator_weights.grad.zero_()
     act.numerator.grad.zero_()
     act.denominator.grad.zero_()
+    print(act.numerator)
+    print(act.denominator)
     
     off_output = act(x)
     loss = loss_fn(expected_output, off_output)
