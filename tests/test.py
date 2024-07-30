@@ -108,8 +108,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     expected_output = torch.sigmoid(x)
     loss_fn = torch.nn.MSELoss(reduction='mean')
     act = Rational().cuda()
-    act.numerator.date = numerator_weights.clone()
-    act.denominator.data = denominator_weights.clone()
+    act.numerator.date = numerator_weights.data.clone()
+    act.denominator.data = denominator_weights.data.clone()
     
     print(act.numerator, act.denominator)
     print(numerator_weights, denominator_weights)
