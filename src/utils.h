@@ -3,6 +3,7 @@
 #define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
+#define CHECK_LESS(x, y) TORCH_CHECK(x < y, #x " should be less than " #y)
 
 torch::Tensor rational_fwd(
   torch::Tensor x, 
