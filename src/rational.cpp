@@ -55,10 +55,7 @@ torch::Tensor rational_fwd_1dgroup(
   CHECK_INPUT(d);
 
   // check group <= 32
-  if (group >= 32) {
-    throw std::invalid_argument("group should be less than 32");
-  }
-
+  TORCH_CHECK(group <= 32, #group "should be less than 32")
 
   return rational_fwd_cuda_1dgroup(x, n, d, group);
 }
