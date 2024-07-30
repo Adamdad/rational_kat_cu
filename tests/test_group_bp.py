@@ -195,7 +195,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     optimizer = optim.Adam([numerator_weights, denominator_weights], lr=0.001)
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
 
     torch.cuda.reset_peak_memory_stats()
     total_time = 0
@@ -210,9 +210,11 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
 
         # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
+        loss.backward()
+        optimizer.step()
         
         if _ % 10 == 0:
             print("Iteration:", _, "Loss:", loss.item())
@@ -229,7 +231,7 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     optimizer = optim.Adam([numerator_weights, denominator_weights], lr=0.001)
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
 
     torch.cuda.reset_peak_memory_stats()
     total_time = 0
@@ -244,9 +246,11 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
 
         # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        loss.backward()
+        optimizer.step()
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
         if _ % 10 == 0:
             print("Iteration:", _, "Loss:", loss.item())
 
@@ -262,7 +266,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
     model = Rational(approx_func="gelu").cuda()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -279,9 +283,11 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
 
         # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        loss.backward()
+        optimizer.step()
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
         if _ % 10 == 0:
             print("Iteration:", _, "Loss:", loss.item())
 
