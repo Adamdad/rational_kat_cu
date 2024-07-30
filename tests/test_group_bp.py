@@ -293,6 +293,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     average_time = total_time / 100
     print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 if __name__=="__main__":
+    x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
     for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:
         group_size = 16
         # Define tensors for the numerator and denominator coefficients
@@ -369,7 +370,7 @@ if __name__=="__main__":
         # numerator_weights.data[3] *= 4
 
         # Input tensor
-        x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
+
         func(x, numerator_weights, denominator_weights, group_size)
    
 
