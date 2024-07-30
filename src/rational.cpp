@@ -75,9 +75,7 @@ std::vector<torch::Tensor> rational_bwd_1dgroup(
   CHECK_INPUT(d);
 
   // check group <= 32
-  if (group >= 32) {
-    throw std::invalid_argument("group should be less than 32");
-  }
+  TORCH_CHECK(group <= 32, #group "should be less than 32")
 
   return rational_bwd_cuda_1dgroup(grad_output, x, n, d, group);
 }
