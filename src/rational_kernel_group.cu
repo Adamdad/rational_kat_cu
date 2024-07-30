@@ -220,14 +220,14 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     __syncthreads();
 
     // Only one thread writes back to global memory
-    // if (threadIdx.x == 0) {
-    //     for (int i = 0; i < n_size; ++i) {
-    //         atomicAdd(&d_a[i], sda[i]);
-    //     }
-    //     for (int i = 0; i < d_size; ++i) {
-    //         atomicAdd(&d_b[i], sdb[i]);
-    //     }
-    // }
+    if (threadIdx.x == 0) {
+        // for (int i = 0; i < n_size; ++i) {
+        //     atomicAdd(&d_a[i], sda[i]);
+        // }
+        // for (int i = 0; i < d_size; ++i) {
+        //     atomicAdd(&d_b[i], sdb[i]);
+        // }
+    }
 }
 
 std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d, int group) {
