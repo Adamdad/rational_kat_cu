@@ -108,9 +108,11 @@ def test_backward(x, numerator_weights, denominator_weights):
     expected_output = torch.sigmoid(x)
     loss_fn = torch.nn.MSELoss(reduction='mean')
     act = Rational().cuda()
-    print(act.numerator.shape, act.denominator.shape)
-    act.numerator.date = numerator_weights
-    act.denominator.data = denominator_weights
+    act.numerator.date = numerator_weights.clone()
+    act.denominator.data = denominator_weights.clone()
+    
+    print(act.numerator, act.denominator)
+    print(numerator_weights, denominator_weights)
 
     # Perform the rational function computation
     output = Rational_CUDA_A_F(x, numerator_weights, denominator_weights)
