@@ -238,19 +238,12 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     start_time = time.time()
 
     for _ in range(100):
-        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-        # output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
         output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
         loss = loss_fn(expected_output, output)
-        # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
 
-        # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
-        # scaler.update()
         if _ % 10 == 0:
             print("Iteration:", _, "Loss:", loss.item())
 
@@ -275,19 +268,11 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     start_time = time.time()
 
     for _ in range(100):
-        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-        # output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
         output = model(x)
         loss = loss_fn(expected_output, output)
-        # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
-
-        # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
-        # scaler.update()
         if _ % 10 == 0:
             print("Iteration:", _, "Loss:", loss.item())
 
@@ -304,58 +289,6 @@ if __name__=="__main__":
         group_size = 16
         # Define tensors for the numerator and denominator coefficients
         # numerator of size (group_size, 5) and denominator of size (group_size, 4)
-        # numerator_weights = nn.Parameter(torch.tensor([
-        #     [
-        #             -0.0012423594497499122,
-        #             0.5080497063245629,
-        #             0.41586363182937475,
-        #             0.13022718688035761,
-        #             0.024355900098993424,
-        #             0.00290283948155535
-        #         ],[
-        #             -0.0012423594497499122,
-        #             0.5080497063245629,
-        #             0.41586363182937475,
-        #             0.13022718688035761,
-        #             0.024355900098993424,
-        #             0.00290283948155535
-        #         ],[
-        #             -0.0012423594497499122,
-        #             0.5080497063245629,
-        #             0.41586363182937475,
-        #             0.13022718688035761,
-        #             0.024355900098993424,
-        #             0.00290283948155535
-        #         ],[
-        #             -0.0012423594497499122,
-        #             0.5080497063245629,
-        #             0.41586363182937475,
-        #             0.13022718688035761,
-        #             0.024355900098993424,
-        #             0.00290283948155535
-        #         ]], dtype=torch.float32, device='cuda'), requires_grad=True)
-        # denominator_weights = nn.Parameter(torch.tensor([[
-        #             -0.06675015696494944,
-        #             0.17927646217001553,
-        #             0.03746682605496631,
-        #             1.6561610853276082e-10
-        #         ],[
-        #             -0.06675015696494944,
-        #             0.17927646217001553,
-        #             0.03746682605496631,
-        #             1.6561610853276082e-10
-        #         ],[
-        #             -0.06675015696494944,
-        #             0.17927646217001553,
-        #             0.03746682605496631,
-        #             1.6561610853276082e-10
-        #         ],[
-        #             -0.06675015696494944,
-        #             0.17927646217001553,
-        #             0.03746682605496631,
-        #             1.6561610853276082e-10
-        #         ]], dtype=torch.float32, device='cuda'), requires_grad=True)
-        
         numerator_weights = nn.Parameter(torch.tensor([
             [
                     -0.0012423594497499122,

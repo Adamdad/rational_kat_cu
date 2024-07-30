@@ -50,6 +50,10 @@ torch::Tensor rational_fwd_1dgroup(
   torch::Tensor n, 
   torch::Tensor d,
   int group) {
+  CHECK_INPUT(x);
+  CHECK_INPUT(n);
+  CHECK_INPUT(d);
+
   return rational_fwd_cuda_1dgroup(x, n, d, group);
 }
 
@@ -59,6 +63,11 @@ std::vector<torch::Tensor> rational_bwd_1dgroup(
   torch::Tensor n, 
   torch::Tensor d,
   int group) {
+  CHECK_INPUT(grad_output);
+  CHECK_INPUT(x);
+  CHECK_INPUT(n);
+  CHECK_INPUT(d);
+  
   return rational_bwd_cuda_1dgroup(grad_output, x, n, d, group);
 }
 
