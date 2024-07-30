@@ -334,7 +334,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     return result
 
 if __name__=="__main__":
-    group_size = 8
+    group_size = 40
     # Define tensors for the numerator and denominator coefficients
     # numerator of size (group_size, 5) and denominator of size (group_size, 4)
     numerator_weights = nn.Parameter(torch.tensor([
