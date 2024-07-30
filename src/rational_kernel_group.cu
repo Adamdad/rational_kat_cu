@@ -106,14 +106,14 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     
     // Shared memory for accumulation
     // group < 32, so we can use 192 and 128 shared memory
-    __shared__ float sda[192];
-    __shared__ float sdb[128];
+    __shared__ float sda[48];
+    __shared__ float sdb[32];
     // initialize shared memory to zero
     if (threadIdx.x == 0) {
-        for (int i = 0; i < 192; ++i) {
+        for (int i = 0; i < 48; ++i) {
             sda[i] = 0;
         }
-        for (int i = 0; i < 128; ++i) {
+        for (int i = 0; i < 32; ++i) {
             sdb[i] = 0;
         }
     }
