@@ -202,10 +202,10 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     start_time = time.time()
 
     for _ in range(100):
-        with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-            output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
-            # output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
-            loss = loss_fn(expected_output, output)
+        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
+        output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        # output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
+        loss = loss_fn(expected_output, output)
             # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
 
         # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
@@ -236,11 +236,11 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     start_time = time.time()
 
     for _ in range(100):
-        with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-            # output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
-            output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
-            loss = loss_fn(expected_output, output)
-            # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
+        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
+        # output = My_rational_1dgroup.apply(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
+        output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
+        loss = loss_fn(expected_output, output)
+        # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
 
         # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
