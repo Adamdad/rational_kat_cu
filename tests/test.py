@@ -133,8 +133,8 @@ def test_backward(x, numerator_weights, denominator_weights):
     off_output = act(x)
     loss = loss_fn(expected_output, off_output)
     loss.backward()
-    off_grad_n = numerator_weights.grad.clone()
-    off_grad_d = denominator_weights.grad.clone()
+    off_grad_n = act.numerator.grad.clone()
+    off_grad_d = act.denominator.grad.clone()
     
     print("my_grad_n", my_grad_n)
     print("torch_grad_n", torch_grad_n)
