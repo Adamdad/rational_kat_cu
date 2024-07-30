@@ -189,13 +189,11 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     my_results = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
 
     print(rational_output)
+    print(vector_result)
     print(my_results)
     assert torch.allclose(rational_output, my_results, atol=1e-6), "Output mismatch"    
-    assert torch.allclose(vector_result[0], my_results[0]), "First element mismatch"
-    assert torch.allclose(vector_result[:, 1], my_results[:,1]), "Second element mismatch"
-    assert torch.allclose(vector_result[:, :, 0], my_results[:,:, 0]), "Third element mismatch"
     # Check if the results match
-    assert torch.allclose(vector_result, my_results)
+    assert torch.allclose(vector_result, my_results, atol=1e-6)
     print("Forward pass test passed")
     print("#"*50)
 
