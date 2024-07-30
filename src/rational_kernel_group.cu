@@ -104,130 +104,130 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     const int d_size,
     int D_per_group) {
     
-    // // Shared memory for accumulation
-    // // group < 32, so we can use 192 and 128 shared memory
-    // __shared__ float sda[48];
-    // __shared__ float sdb[32];
-    // // initialize shared memory to zero
-    // if (threadIdx.x == 0) {
-    //     for (int i = 0; i < 48; ++i) {
-    //         sda[i] = 0;
-    //     }
-    //     for (int i = 0; i < 32; ++i) {
-    //         sdb[i] = 0;
-    //     }
-    // }
+    // Shared memory for accumulation
+    // group < 32, so we can use 192 and 128 shared memory
+    __shared__ float sda[48];
+    __shared__ float sdb[32];
+    // initialize shared memory to zero
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < 48; ++i) {
+            sda[i] = 0;
+        }
+        for (int i = 0; i < 32; ++i) {
+            sdb[i] = 0;
+        }
+    }
 
-    // __syncthreads();
+    __syncthreads();
 
-    // int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    // if (idx >= x_size) return;  // Prevent out-of-bounds memory access
+    if (idx >= x_size) return;  // Prevent out-of-bounds memory access
 
-    // // Calculate the index within the dimension D
-    // int d_index = idx % D;
-    // // Calculate the group index based on the position within dimension D
-    // int g_index = floor(d_index / D_per_group);
+    // Calculate the index within the dimension D
+    int d_index = idx % D;
+    // Calculate the group index based on the position within dimension D
+    int g_index = floor(d_index / D_per_group);
 
-    // // Calculate specific indices for a and b based on group
-    // int a_idx = g_index * 6;
-    // int b_idx = g_index * 4;
+    // Calculate specific indices for a and b based on group
+    int a_idx = g_index * 6;
+    int b_idx = g_index * 4;
 
-    // // Load coefficients into registers
-    // scalar_t shared_a[6], shared_b_abs[4], shared_b[4];;
-    // for (int i = 0; i < 6; ++i) {
-    //     shared_a[i] = a[a_idx + i];
-    // }
-    // for (int i = 0; i < 4; ++i) {
-    //     shared_b_abs[i] = abs(b[b_idx + i]);  // Store absolute values directly if needed
-    //     shared_b[i] = b[b_idx + i];
-    // }
+    // Load coefficients into registers
+    scalar_t shared_a[6], shared_b_abs[4], shared_b[4];;
+    for (int i = 0; i < 6; ++i) {
+        shared_a[i] = a[a_idx + i];
+    }
+    for (int i = 0; i < 4; ++i) {
+        shared_b_abs[i] = abs(b[b_idx + i]);  // Store absolute values directly if needed
+        shared_b[i] = b[b_idx + i];
+    }
 
-    // scalar_t local_da[6] = {0}; // Local accumulation arrays
-    // scalar_t local_db[4] = {0};
+    scalar_t local_da[6] = {0}; // Local accumulation arrays
+    scalar_t local_db[4] = {0};
     
-    // scalar_t xp = x[idx];
-    // scalar_t axp = abs(xp);
-    // // Compute powers of xp
-    // scalar_t xp_powers[5];
-    // xp_powers[0] = xp;
-    // xp_powers[1] = xp * xp_powers[0]; // xp^2
-    // xp_powers[2] = xp * xp_powers[1]; // xp^3
-    // xp_powers[3] = xp * xp_powers[2]; // xp^4
-    // xp_powers[4] = xp * xp_powers[3]; // xp^5
+    scalar_t xp = x[idx];
+    scalar_t axp = abs(xp);
+    // Compute powers of xp
+    scalar_t xp_powers[5];
+    xp_powers[0] = xp;
+    xp_powers[1] = xp * xp_powers[0]; // xp^2
+    xp_powers[2] = xp * xp_powers[1]; // xp^3
+    xp_powers[3] = xp * xp_powers[2]; // xp^4
+    xp_powers[4] = xp * xp_powers[3]; // xp^5
 
-    // // Compute powers of axp
-    // scalar_t axp_powers[4];
-    // axp_powers[0] = axp;
-    // axp_powers[1] = axp * axp_powers[0]; // axp^2
-    // axp_powers[2] = axp * axp_powers[1]; // axp^3
-    // axp_powers[3] = axp * axp_powers[2]; // axp^4
+    // Compute powers of axp
+    scalar_t axp_powers[4];
+    axp_powers[0] = axp;
+    axp_powers[1] = axp * axp_powers[0]; // axp^2
+    axp_powers[2] = axp * axp_powers[1]; // axp^3
+    axp_powers[3] = axp * axp_powers[2]; // axp^4
 
-    // // Compute absolute values once
+    // Compute absolute values once
 
-    // scalar_t P = shared_a[0] 
-    // + shared_a[1] * xp_powers[0] 
-    // + shared_a[2] * xp_powers[1] 
-    // + shared_a[3] * xp_powers[2] 
-    // + shared_a[4] * xp_powers[3] 
-    // + shared_a[5] * xp_powers[4];
+    scalar_t P = shared_a[0] 
+    + shared_a[1] * xp_powers[0] 
+    + shared_a[2] * xp_powers[1] 
+    + shared_a[3] * xp_powers[2] 
+    + shared_a[4] * xp_powers[3] 
+    + shared_a[5] * xp_powers[4];
 
-    // scalar_t Q = scalar_t(1.0)
-    // + shared_b_abs[0] * axp_powers[0] 
-    // + shared_b_abs[1] * axp_powers[1] 
-    // + shared_b_abs[2] * axp_powers[2] 
-    // + shared_b_abs[3] * axp_powers[3];
+    scalar_t Q = scalar_t(1.0)
+    + shared_b_abs[0] * axp_powers[0] 
+    + shared_b_abs[1] * axp_powers[1] 
+    + shared_b_abs[2] * axp_powers[2] 
+    + shared_b_abs[3] * axp_powers[3];
 
 
-    // scalar_t R = shared_a[1] 
-    // + scalar_t(2.0) * shared_a[2] * xp_powers[0] 
-    // + scalar_t(3.0) * shared_a[3] * xp_powers[1] 
-    // + scalar_t(4.0) * shared_a[4] * xp_powers[2] 
-    // + scalar_t(5.0) * shared_a[5] * xp_powers[3];
+    scalar_t R = shared_a[1] 
+    + scalar_t(2.0) * shared_a[2] * xp_powers[0] 
+    + scalar_t(3.0) * shared_a[3] * xp_powers[1] 
+    + scalar_t(4.0) * shared_a[4] * xp_powers[2] 
+    + scalar_t(5.0) * shared_a[5] * xp_powers[3];
 
-    // scalar_t S = copysign(scalar_t(1.0), xp) * (shared_b_abs[0] 
-    // + scalar_t(2.0) * shared_b_abs[1] * axp_powers[0] 
-    // + scalar_t(3.0) * shared_b_abs[2] * axp_powers[1] 
-    // + scalar_t(4.0) * shared_b_abs[3] * axp_powers[2]);
+    scalar_t S = copysign(scalar_t(1.0), xp) * (shared_b_abs[0] 
+    + scalar_t(2.0) * shared_b_abs[1] * axp_powers[0] 
+    + scalar_t(3.0) * shared_b_abs[2] * axp_powers[1] 
+    + scalar_t(4.0) * shared_b_abs[3] * axp_powers[2]);
     
 
-    // scalar_t grad_o = grad_output[idx];
+    scalar_t grad_o = grad_output[idx];
     
-    // scalar_t mpq2 = -P/(Q*Q);
+    scalar_t mpq2 = -P/(Q*Q);
 
-    // scalar_t d_i_x = (R / Q + S * mpq2) * grad_o;
-    // d_x[idx] = d_i_x;
+    scalar_t d_i_x = (R / Q + S * mpq2) * grad_o;
+    d_x[idx] = d_i_x;
 
-    // // Loop for computing d_a contributions
-    // local_da[0] = scalar_t(1.0) / Q * grad_o;
-    // for (int i = 1; i < 6; ++i) {
-    //     local_da[i] = (xp_powers[i-1] / Q) * grad_o;
-    // }
+    // Loop for computing d_a contributions
+    local_da[0] = scalar_t(1.0) / Q * grad_o;
+    for (int i = 1; i < 6; ++i) {
+        local_da[i] = (xp_powers[i-1] / Q) * grad_o;
+    }
 
-    // // Loop for computing d_b contributions
-    // for (int i = 0; i < 4; ++i) {
-    //     local_db[i] = mpq2 * copysign(scalar_t(1.0), shared_b[i]) * axp_powers[i] * grad_o;
-    // }
+    // Loop for computing d_b contributions
+    for (int i = 0; i < 4; ++i) {
+        local_db[i] = mpq2 * copysign(scalar_t(1.0), shared_b[i]) * axp_powers[i] * grad_o;
+    }
 
-    // // Reduce local arrays to shared memory
-    // for (int i = 0; i < 6; ++i) {
-    //     atomicAdd(&sda[a_idx + i], local_da[i]);
-    // }
-    // for (int i = 0; i < 4; ++i) {
-    //     atomicAdd(&sdb[b_idx + i], local_db[i]);
-    // }
+    // Reduce local arrays to shared memory
+    for (int i = 0; i < 6; ++i) {
+        atomicAdd(&sda[a_idx + i], local_da[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        atomicAdd(&sdb[b_idx + i], local_db[i]);
+    }
 
-    // __syncthreads();
+    __syncthreads();
 
-    // // Only one thread writes back to global memory
-    // if (threadIdx.x == 0) {
-    //     for (int i = 0; i < n_size; ++i) {
-    //         atomicAdd(&d_a[i], sda[i]);
-    //     }
-    //     for (int i = 0; i < d_size; ++i) {
-    //         atomicAdd(&d_b[i], sdb[i]);
-    //     }
-    // }
+    // Only one thread writes back to global memory
+    if (threadIdx.x == 0) {
+        for (int i = 0; i < n_size; ++i) {
+            atomicAdd(&d_a[i], sda[i]);
+        }
+        for (int i = 0; i < d_size; ++i) {
+            atomicAdd(&d_b[i], sdb[i]);
+        }
+    }
 }
 
 std::vector<torch::Tensor> rational_bwd_cuda_1dgroup(torch::Tensor grad_output, torch::Tensor x, torch::Tensor n, torch::Tensor d, int group) {
