@@ -30,15 +30,14 @@ def train_and_benchmark(activation_func, func, label, epochs=10, seed=42):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    x = torch.linspace(-2, 2, 100).unsqueeze(0).unsqueeze(0)
-    y = func(x)
+    x = torch.linspace(-2, 2, 100).unsqueeze(0).unsqueeze(0).to(device)
+    y = func(x).to(device)
     model.train()
     start_time = time.time()
     for epoch in range(epochs):
         total_loss = 0
-        images, labels = x.to(device), y.to(device)
-        outputs = model(images)
-        loss = criterion(outputs, labels)
+        outputs = model(x)
+        loss = criterion(outputs, y)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
