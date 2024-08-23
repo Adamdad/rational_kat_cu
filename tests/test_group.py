@@ -231,8 +231,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     
     print("Backward pass test passed")
     
-    print(numerator_weights, denominator_weights)
-    
+    # print(numerator_weights, denominator_weights)
+
 def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     import time
     B, L, D = x.shape
