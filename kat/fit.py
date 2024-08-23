@@ -28,9 +28,9 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    x = torch.linspace(-2, 2, 500).unsqueeze(0).unsqueeze(0).to(device)
+    x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
     model.train()
     start_time = time.time()
@@ -65,6 +65,6 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
 
 if __name__ == "__main__":
     func = erfc_softplus_squared_torch
-    kat_activation = KAT_1DGroup(num_groups=1, init_mode="swish") # Placeholder for KAT_1DGroup if not accessible
+    kat_activation = KAT_1DGroup(num_groups=1) # Placeholder for KAT_1DGroup if not accessible
     train_and_benchmark(kat_activation, func, 'KAT 1DGroup (as ReLU placeholder)')
     print(kat_activation.weight_numerator, kat_activation.weight_denominator)
