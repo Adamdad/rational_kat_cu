@@ -235,9 +235,11 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     
 def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     import time
-    expected_output = torch.sigmoid(x)
-    loss_fn = torch.nn.MSELoss(reduction='mean')
     B, L, D = x.shape
+    # expected_output = torch.sigmoid(x)
+    expected_output = torch.cat([torch.sigmoid(x[:,:,:D//2]), torch.relu(x[:,:,D//2:])], dim=2)
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+
     used_time = 0
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     start = time.time()
