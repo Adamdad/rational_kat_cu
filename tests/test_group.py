@@ -196,6 +196,7 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     assert torch.allclose(vector_result, my_results, atol=1e-6)
     print("Forward pass test passed")
     print("#"*50)
+    
 
 def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("Testing backward pass")
@@ -228,6 +229,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     assert torch.allclose(torch_grad_d, my_grad_d, atol=1e-6), "Denominator gradient mismatch"
     
     print("Backward pass test passed")
+    
+    print(numerator_weights, denominator_weights)
     
 def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     import time
