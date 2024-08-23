@@ -23,15 +23,15 @@ def erfc_softplus_squared_torch(x):
     erfc_x = torch.erfc(softplus_x)
     return erfc_x ** 2
 
-def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
+def train_and_benchmark(activation_func, func, label, epochs=3000, seed=42):
     set_random_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.008)
+    optimizer = optim.Adam(model.parameters(), lr=0.006)
 
     # Learning rate scheduler
-    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma = 1.0)  # Decays the learning rate by a factor of 0.9 each epoch
+    # scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma = 1.0)  # Decays the learning rate by a factor of 0.9 each epoch
 
     x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
@@ -43,8 +43,8 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
         loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
-        if epoch % 100:
-            scheduler.step()  # Update the learning rate
+        # if epoch % 100:
+        #     scheduler.step()  # Update the learning rate
 
         print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
     
