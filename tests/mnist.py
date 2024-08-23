@@ -13,6 +13,17 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from rational.torch import Rational
 import time
+import numpy as np
+import random
+
+def set_random_seed(seed_value=42):
+    torch.manual_seed(seed_value)
+    torch.cuda.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)  # if use multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed_value)
+    random.seed(seed_value)
 
 class NeuralNet(nn.Module):
     def __init__(self, activation_func):
@@ -28,7 +39,8 @@ class NeuralNet(nn.Module):
         x = self.fc2(x)
         return x
 
-def train_and_benchmark(activation_func, label, epochs=10):
+def train_and_benchmark(activation_func, label, epochs=10, seed=42):
+    set_random_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = NeuralNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
@@ -59,7 +71,7 @@ def train_and_benchmark(activation_func, label, epochs=10):
 
 if __name__ == "__main__":
     rational_activation = Rational(approx_func="gelu")
-    kat_activation = KAT_1DGroup() # Placeholder for KAT_1DGroup if not accessible
+    kat_activation = KAT_1DGroup(num_groups=8, init_mode="gelu") # Placeholder for KAT_1DGroup if not accessible
 
     train_and_benchmark(rational_activation, 'Rational GELU')
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
