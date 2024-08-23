@@ -28,21 +28,25 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.005)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+    # Learning rate scheduler
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9999)  # Decays the learning rate by a factor of 0.9 each epoch
 
     x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
     model.train()
     start_time = time.time()
     for epoch in range(epochs):
-        total_loss = 0
+        optimizer.zero_grad()
         outputs = model(x)
         loss = criterion(outputs, y)
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        total_loss += loss.item()
-        print(f'Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}')
+        scheduler.step()  # Update the learning rate
+
+        print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
+    
     duration = time.time() - start_time
     print(f'{label} Training completed in {duration:.2f} seconds.')
     
