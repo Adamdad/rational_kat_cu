@@ -23,14 +23,14 @@ def erfc_softplus_squared_torch(x):
     erfc_x = torch.erfc(softplus_x)
     return erfc_x ** 2
 
-def train_and_benchmark(activation_func, func, label, epochs=10, seed=42):
+def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     set_random_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    x = torch.linspace(-2, 2, 100).unsqueeze(0).unsqueeze(0).to(device)
+    x = torch.linspace(-2, 2, 500).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
     model.train()
     start_time = time.time()
