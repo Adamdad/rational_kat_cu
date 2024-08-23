@@ -93,4 +93,5 @@ if __name__ == "__main__":
     kat_activation = KAT_1DGroup(num_groups=8, init_mode="gelu") # Placeholder for KAT_1DGroup if not accessible
 
     train_and_benchmark(rational_activation, 'Rational GELU')
+    train_and_benchmark(rational_activation, 'Rational GELU')
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
