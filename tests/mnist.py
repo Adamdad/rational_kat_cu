@@ -1,5 +1,5 @@
 import torch
-from kat import KAT_1DGroup
+from kat_rational import KAT_1DGroup
 from rational.torch import Rational
 from torch import nn
 import time
