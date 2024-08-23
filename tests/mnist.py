@@ -89,8 +89,8 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
 
 
 if __name__ == "__main__":
-    gelu = nn.GELU()
-    train_and_benchmark(gelu, 'GELU')
+    # gelu = nn.GELU()
+    # train_and_benchmark(gelu, 'GELU')
     
     # rational_activation = Rational(approx_func="gelu")
     # train_and_benchmark(rational_activation, 'Rational GELU')
@@ -98,6 +98,6 @@ if __name__ == "__main__":
     # rational_activation = Rational(approx_func="gelu")
     # train_and_benchmark(rational_activation, 'Rational GELU')
     # print(rational_activation.numerator, rational_activation.denominator)
-    kat_activation = KAT_1DGroup(num_groups=4, init_mode="swish") # Placeholder for KAT_1DGroup if not accessible
+    kat_activation = KAT_1DGroup(num_groups=4, init_mode="searched") # Placeholder for KAT_1DGroup if not accessible
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
     print(kat_activation.weight_numerator, kat_activation.weight_denominator)
