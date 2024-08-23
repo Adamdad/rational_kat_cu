@@ -55,8 +55,6 @@ class KAT_1DGroup(nn.Module):
         self.order = (5, 4)
         self.num_groups = num_groups
         # Initialize parameters for each group
-        self.weight_numerator = nn.Parameter(torch.randn(num_groups, self.order[0]+1), requires_grad=True)
-        self.weight_denominator = nn.Parameter(torch.randn(num_groups, self.order[1]), requires_grad=True)
         self.initialize(mode=init_mode)
         
     def initialize(self, mode="gelu"):
@@ -74,9 +72,11 @@ class KAT_1DGroup(nn.Module):
             weight_numerator = torch.cat([weight_numerator]*self.num_groups).view(self.num_groups, -1)
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
             weight_denominator = torch.cat([weight_denominator]*self.num_groups).view(self.num_groups, -1)
-            
-            self.weight_numerator.data = torch.FloatTensor(weight_numerator)
-            self.weight_denominator.data = torch.FloatTensor(weight_denominator)
+             
+            self.weight_numerator = nn.Parameter(torch.FloatTensor(weight_numerator)
+                                                      , requires_grad=True) 
+            self.weight_denominator = nn.Parameter(torch.FloatTensor(weight_denominator)
+                                                      , requires_grad=True) 
         except FileNotFoundError:
             print("Initialization JSON file not found.")
         except json.JSONDecodeError:
