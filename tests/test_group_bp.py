@@ -263,7 +263,7 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     print(numerator_weights, denominator_weights)
 
 def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4):
-    expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
+    # expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     
     # scaler = torch.cuda.amp.GradScaler()
@@ -295,7 +295,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     average_time = total_time / 100
     print("Time taken by old bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
     
-    print(numerator_weights, denominator_weights)
+    print(model.numerator, model.denominator)
 if __name__=="__main__":
     x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
     for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:
