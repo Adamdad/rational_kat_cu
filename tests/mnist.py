@@ -23,7 +23,8 @@ class NeuralNet(nn.Module):
 
     def forward(self, x):
         x = x.view(-1, 784)
-        x = self.activation(self.fc1(x))
+        x = self.fc1(x)
+        x = self.activation(x.unsqueeze(1)).squeeze(1)
         x = self.fc2(x)
         return x
 
