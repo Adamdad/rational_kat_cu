@@ -367,7 +367,7 @@ if __name__=="__main__":
     test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     test_backward(x, numerator_weights, denominator_weights, group_size)
-    # benchmark_backward(x, numerator_weights, denominator_weights, group_size)
+    benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
     
     
