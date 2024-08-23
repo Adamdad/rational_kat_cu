@@ -90,8 +90,8 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
 
 if __name__ == "__main__":
     rational_activation = Rational(approx_func="gelu")
+    train_and_benchmark(rational_activation, 'Rational GELU')
+    rational_activation = Rational(approx_func="gelu")
+    train_and_benchmark(rational_activation, 'Rational GELU')
     kat_activation = KAT_1DGroup(num_groups=8, init_mode="gelu") # Placeholder for KAT_1DGroup if not accessible
-
-    train_and_benchmark(rational_activation, 'Rational GELU')
-    train_and_benchmark(rational_activation, 'Rational GELU')
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
