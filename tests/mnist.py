@@ -52,6 +52,8 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     ])
     dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     data_loader = DataLoader(dataset, batch_size=64, shuffle=True)
+    test_dataset = datasets.MNIST(root='./data', train=False, transform=transform)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
     
     model.train()
     start_time = time.time()
@@ -68,6 +70,23 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
         print(f'{label} - Epoch {epoch+1}: Loss {total_loss / len(data_loader)}')
     duration = time.time() - start_time
     print(f'{label} Training completed in {duration:.2f} seconds.')
+    
+    # Testing phase
+    model.eval()
+    total_correct = 0
+    total_images = 0
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total_images += labels.size(0)
+            total_correct += (predicted == labels).sum().item()
+
+    accuracy = total_correct / total_images * 100
+    duration = time.time() - start_time
+    print(f'{label} Testing Accuracy: {accuracy:.2f}%, Training completed in {duration:.2f} seconds.')
+
 
 if __name__ == "__main__":
     rational_activation = Rational(approx_func="gelu")
