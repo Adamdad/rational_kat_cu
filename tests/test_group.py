@@ -200,9 +200,10 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
 
 def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("Testing backward pass")
-    expected_output = torch.relu(x)
-    loss_fn = torch.nn.MSELoss(reduction='mean')
     B, L, D = x.shape
+    expected_output = torch.cat([torch.sigmoid(x[:,:,:D//2]), torch.relu(x[:,:,D//2:])], dim=2)
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+    
     # Perform the rational function computation
     output = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
     # output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
