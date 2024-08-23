@@ -30,7 +30,7 @@ def train_and_benchmark(activation_func, func, label, epochs=10, seed=42):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    x = torch.linspace(-2, 2, 100)
+    x = torch.linspace(-2, 2, 100).unsqueeze(0).unsqueeze(0)
     y = func(x)
     model.train()
     start_time = time.time()
@@ -49,8 +49,12 @@ def train_and_benchmark(activation_func, func, label, epochs=10, seed=42):
     
     # Plot the output
     import matplotlib.pyplot as plt
-    plt.plot(x.cpu().numpy(), y.cpu().numpy(), label='True')
-    plt.plot(x.cpu().numpy(), model(x).detach().cpu().numpy(), label='Predicted')
+    pred = model(x).squeeze(0).squeeze(0).detach().cpu().numpy()
+    x = x.squeeze(0).squeeze(0).cpu().numpy()
+    y = y.squeeze(0).squeeze(0).cpu().numpy()
+    
+    plt.plot(x, y, label='True')
+    plt.plot(x, pred, label='Predicted')
     plt.xlabel("Input")
     
     plt.ylabel("Output")
