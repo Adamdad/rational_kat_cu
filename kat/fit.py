@@ -28,7 +28,7 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
