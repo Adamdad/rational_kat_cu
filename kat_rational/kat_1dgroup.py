@@ -22,7 +22,7 @@ class rational_1dgroup(torch.autograd.Function):
         """
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
         ctx.group = group
-        x = kat_rational.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
+        x = kat_rational_cu.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
         return x
 
     @staticmethod
@@ -39,7 +39,7 @@ class rational_1dgroup(torch.autograd.Function):
         """
         input, weight_numerator, weight_denominator = ctx.saved_tensors
         group = ctx.group
-        d_input, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, input, weight_numerator, weight_denominator, group)
+        d_input, d_weight_numerator, d_weight_denominator = kat_rational_cu.rational_bwd_1dgroup(grad_output, input, weight_numerator, weight_denominator, group)
         return d_input, d_weight_numerator, d_weight_denominator, None
 
 class KAT_1DGroup(nn.Module):
