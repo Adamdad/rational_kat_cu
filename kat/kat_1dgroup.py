@@ -75,8 +75,8 @@ class KAT_1DGroup(nn.Module):
             weight_denominator = torch.tensor(data[mode]["init_w_denominator"])
             weight_denominator = torch.cat([weight_denominator]*self.num_groups).view(self.num_groups, -1)
             
-            self.weight_numerator.data = weight_numerator
-            self.weight_denominator.data = weight_denominator
+            self.weight_numerator.data = torch.FloatTensor(weight_numerator)
+            self.weight_denominator.data = torch.FloatTensor(weight_denominator)
         except FileNotFoundError:
             print("Initialization JSON file not found.")
         except json.JSONDecodeError:
