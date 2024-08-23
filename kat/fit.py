@@ -28,7 +28,7 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = activation_func.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.05)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     # Learning rate scheduler
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)  # Decays the learning rate by a factor of 0.9 each epoch
