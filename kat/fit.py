@@ -31,7 +31,7 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
     optimizer = optim.Adam(model.parameters(), lr=0.05)
 
     # Learning rate scheduler
-    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.999999)  # Decays the learning rate by a factor of 0.9 each epoch
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)  # Decays the learning rate by a factor of 0.9 each epoch
 
     x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
     y = func(x).to(device)
@@ -43,7 +43,8 @@ def train_and_benchmark(activation_func, func, label, epochs=1000, seed=42):
         loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
-        scheduler.step()  # Update the learning rate
+        if epoch % 100:
+            scheduler.step()  # Update the learning rate
 
         print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
     
