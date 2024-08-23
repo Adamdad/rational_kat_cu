@@ -16,7 +16,7 @@ setup(
                         It is designed to be used as part of the 'kat' project, enhancing its capabilities in handling
                         specialized mathematical functions with optimized CUDA support.""",  # Detailed description
     ext_modules=[
-        CUDAExtension(name='kat_rational', 
+        CUDAExtension(name='kat_rational_cu', 
                       sources=sources,
                       )
     ],

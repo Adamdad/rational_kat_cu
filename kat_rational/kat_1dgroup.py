@@ -1,5 +1,5 @@
 import torch
-import kat_rational
+import kat_rational_cu
 from torch import nn
 import os
 import json
