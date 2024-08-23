@@ -109,7 +109,7 @@ __global__ void rational_bwd_cuda_kernel_1dgroup(
     __shared__ float sda[192];
     __shared__ float sdb[128];
     // initialize shared memory to zero
-    if (threadIdx.x == 0) {
+    if ( threadIdx.x == 0) {
         for (int i = 0; i < 192; ++i) {
             sda[i] = 0;
         }

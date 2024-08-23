@@ -43,7 +43,7 @@ class rational_1dgroup(torch.autograd.Function):
         return d_input, d_weight_numerator, d_weight_denominator, None
 
 class KAT_1DGroup(nn.Module):
-    def __init__(self, num_groups=4, init_mode="gelu"):
+    def __init__(self, num_groups=4, mode="gelu"):
         """
         Initialize the KAT_1DGroup module.
 
@@ -55,7 +55,7 @@ class KAT_1DGroup(nn.Module):
         self.order = (5, 4)
         self.num_groups = num_groups
         # Initialize parameters for each group
-        self.initialize(mode=init_mode)
+        self.initialize(mode=mode)
         
     def initialize(self, mode="gelu"):
         """
