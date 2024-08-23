@@ -3,7 +3,7 @@ from torch import nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from kat import KAT_1DGroup
+from kat_rational import KAT_1DGroup
 import time
 import numpy as np
 import random
