@@ -225,7 +225,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
 
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
     average_time = total_time / 100
-    print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
+    print("Time taken by our group bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
     
 def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_size=4):
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
@@ -253,7 +253,7 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
 
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
     average_time = total_time / 100
-    print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
+    print("Time taken by torch bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 
 def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4):
     expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
@@ -282,7 +282,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
 
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
     average_time = total_time / 100
-    print("Time taken by loop bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
+    print("Time taken by old bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
 if __name__=="__main__":
     x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
     for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:

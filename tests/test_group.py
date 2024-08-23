@@ -364,9 +364,9 @@ if __name__=="__main__":
 
     # Input tensor
     x = torch.randn(100, 256, 1280, dtype=torch.float32, device='cuda')
-    test_forward(x, numerator_weights, denominator_weights, group_size)
+    # test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
-    test_backward(x, numerator_weights, denominator_weights, group_size)
+    # test_backward(x, numerator_weights, denominator_weights, group_size)
     benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
     
