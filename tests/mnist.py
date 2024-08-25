@@ -51,7 +51,7 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
         transforms.Normalize((0.5,), (0.5,))
     ])
     dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    data_loader = DataLoader(dataset, batch_size=256, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=512, shuffle=True)
     test_dataset = datasets.MNIST(root='./data', train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
     
