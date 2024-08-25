@@ -44,14 +44,15 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = NeuralNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))
     ])
     dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    data_loader = DataLoader(dataset, batch_size=512, shuffle=True)
+    data_loader = DataLoader(dataset, batch_size=128, shuffle=True)
     test_dataset = datasets.MNIST(root='./data', train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
     
