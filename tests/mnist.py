@@ -21,9 +21,9 @@ def set_random_seed(seed_value=42):
 class NeuralNet(nn.Module):
     def __init__(self, activation_func):
         super(NeuralNet, self).__init__()
-        self.fc1 = nn.Linear(784, 128)
+        self.fc1 = nn.Linear(784, 256)
         self.activation = activation_func
-        self.fc2 = nn.Linear(128, 10)
+        self.fc2 = nn.Linear(256, 10)
 
     def forward(self, x):
         x = x.view(-1, 784)
@@ -86,18 +86,18 @@ if __name__ == "__main__":
     # gelu = nn.GELU()
     # train_and_benchmark(gelu, 'GELU')
     
+    rational_activation = Rational(approx_func="gelu")
+    train_and_benchmark(rational_activation, 'Rational GELU')
+    print(rational_activation.numerator, rational_activation.denominator)
     # rational_activation = Rational(approx_func="gelu")
     # train_and_benchmark(rational_activation, 'Rational GELU')
     # print(rational_activation.numerator, rational_activation.denominator)
-    # rational_activation = Rational(approx_func="gelu")
-    # train_and_benchmark(rational_activation, 'Rational GELU')
-    # print(rational_activation.numerator, rational_activation.denominator)
     
     
     
-    kat_activation = KAT_1DGroupv2(num_groups=8, mode="gelu") # Placeholder for KAT_1DGroup if not accessible
-    train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
-    print(kat_activation.weight_numerator, kat_activation.weight_denominator)
+    # kat_activation = KAT_1DGroupv2(num_groups=8, mode="gelu") # Placeholder for KAT_1DGroup if not accessible
+    # train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
+    # print(kat_activation.weight_numerator, kat_activation.weight_denominator)
 
     # kat_activation = KAT_1DGroup(num_groups=4, init_mode="searched") # Placeholder for KAT_1DGroup if not accessible
     # train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
