@@ -95,7 +95,7 @@ if __name__ == "__main__":
     
     
     
-    kat_activation = KAT_1DGroupv2(num_groups=8, mode="gelu") # Placeholder for KAT_1DGroup if not accessible
+    kat_activation = KAT_1DGroupv2(num_groups=4, mode="gelu") # Placeholder for KAT_1DGroup if not accessible
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
     print(kat_activation.weight_numerator, kat_activation.weight_denominator)
 
