@@ -83,8 +83,8 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
 
 
 if __name__ == "__main__":
-    # gelu = nn.GELU()
-    # train_and_benchmark(gelu, 'GELU')
+    gelu = nn.GELU()
+    train_and_benchmark(gelu, 'GELU')
     
     rational_activation = Rational(approx_func="gelu")
     train_and_benchmark(rational_activation, 'Rational GELU')
