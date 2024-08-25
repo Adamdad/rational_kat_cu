@@ -206,6 +206,8 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     my_grad_n = numerator_weights.grad.clone()
     my_grad_d = denominator_weights.grad.clone()
     
+    print(output-expected_output)
+    
     print(torch_grad_n)
     print(my_grad_n)
     print(torch_grad_d)
@@ -348,7 +350,7 @@ if __name__=="__main__":
     # numerator_weights.data[3] *= 4
 
     # Input tensor
-    x = torch.randn(100, 256, 1280, dtype=torch.float32, device='cuda')
+    x = torch.randn(1, 1, 1280, dtype=torch.float32, device='cuda')
     # test_forward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     test_backward(x, numerator_weights, denominator_weights, group_size)
