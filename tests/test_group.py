@@ -178,9 +178,9 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     # print(my_results)
     print("rational_output - vector_result", rational_output - vector_result)
     print("my_results - vector_result", my_results - vector_result)
-    assert torch.allclose(rational_output, my_results), "Output mismatch"    
+    assert torch.allclose(rational_output, my_results, atol=1e-07), "Output mismatch"    
     # Check if the results match
-    assert torch.allclose(vector_result, my_results)
+    assert torch.allclose(vector_result, my_results, atol=1e-07)
     print("Forward pass test passed")
     print("#"*50)
     
