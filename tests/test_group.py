@@ -206,7 +206,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     my_grad_n = numerator_weights.grad.clone()
     my_grad_d = denominator_weights.grad.clone()
     
-    print(output-expected_output)
+    print(output-my_output )
     
     print(torch_grad_n)
     print(my_grad_n)
