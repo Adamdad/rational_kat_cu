@@ -139,8 +139,7 @@ class KAT_1DGroupv2(nn.Module):
                                                       , requires_grad=True) 
             self.weight_denominator = nn.Parameter(torch.FloatTensor(weight_denominator)
                                                       , requires_grad=True) 
-            scaling_factors = torch.ones(self.num_groups, 1)  # initialize scaling factors to 1
-            self.scaling_factors = nn.Parameter(scaling_factors, requires_grad=True)
+
         except FileNotFoundError:
             print("Initialization JSON file not found.")
         except json.JSONDecodeError:
@@ -158,7 +157,9 @@ class KAT_1DGroupv2(nn.Module):
         """
         assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
 
-        return rational_1dgroup.apply(input, self.weight_numerator * self.scaling_factors, self.weight_denominator, self.num_groups)
+        # select the first group, and repeat the weights for all groups
+        weight_numerator = self.weight_numerator[0].repeat(self.num_groups, 1)
+        return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups)
     
     def extra_repr(self):
         """
