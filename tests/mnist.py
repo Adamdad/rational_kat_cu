@@ -45,7 +45,7 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     model = NeuralNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.Adam(model.parameters(), lr=0.001)
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
     
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -93,9 +93,9 @@ if __name__ == "__main__":
     # gelu = nn.GELU()
     # train_and_benchmark(gelu, 'GELU')
     
-    # rational_activation = Rational(approx_func="gelu")
-    # train_and_benchmark(rational_activation, 'Rational GELU')
-    # print(rational_activation.numerator, rational_activation.denominator)
+    rational_activation = Rational(approx_func="gelu")
+    train_and_benchmark(rational_activation, 'Rational GELU')
+    print(rational_activation.numerator, rational_activation.denominator)
     # rational_activation = Rational(approx_func="gelu")
     # train_and_benchmark(rational_activation, 'Rational GELU')
     # print(rational_activation.numerator, rational_activation.denominator)
