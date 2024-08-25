@@ -176,8 +176,8 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     # print(rational_output)
     # print(vector_result)
     # print(my_results)
-    print(rational_output - vector_result)
-    print(my_results - vector_result)
+    print("rational_output - vector_result", rational_output - vector_result)
+    print("my_results - vector_result", my_results - vector_result)
     assert torch.allclose(rational_output, my_results), "Output mismatch"    
     # Check if the results match
     assert torch.allclose(vector_result, my_results)
