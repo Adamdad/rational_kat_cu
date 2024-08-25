@@ -1,5 +1,5 @@
 import torch
-import kat_rational
+from kat_rational import rational_1dgroup
 from rational.torch import Rational
 from torch import nn
 import time
@@ -147,21 +147,6 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     # Concatenate the results along the depth dimension
     return torch.cat(results, dim=2)
 
-class My_rational_1dgroup(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, input, weight_numerator, weight_denominator, group):
-        ctx.save_for_backward(input, weight_numerator, weight_denominator)
-        ctx.group = group
-        x = kat_rational.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
-        return x
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        x, w_numerator, w_denominator = ctx.saved_tensors
-        group = ctx.group
-        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, x, w_numerator, w_denominator, group)
-        return d_x, d_weight_numerator, d_weight_denominator, None
-
 def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("Testing backward pass")
     expected_output = torch.relu(x)
@@ -177,7 +162,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
     
-    my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+    my_output = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = numerator_weights.grad.clone()
@@ -205,7 +190,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
 
     for _ in range(100):
         # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
-        output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        output = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         # output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
         loss = loss_fn(expected_output, output)
             # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
