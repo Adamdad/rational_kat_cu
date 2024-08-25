@@ -113,7 +113,7 @@ class KAT_1DGroupv2(nn.Module):
             num_groups (int): Number of groups to divide the input for separate processing.
             init_mode (str): Initialization mode which determines the preset weights from JSON file.
         """
-        super(KAT_1DGroup, self).__init__()
+        super(KAT_1DGroupv2, self).__init__()
         self.order = (5, 4)
         self.num_groups = num_groups
         # Initialize parameters for each group
