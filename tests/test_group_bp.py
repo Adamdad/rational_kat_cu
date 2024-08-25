@@ -295,13 +295,13 @@ if __name__=="__main__":
                     0.13022718688035761,
                     0.024355900098993424,
                     0.00290283948155535
-                ]] * group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
+                ]] * group_size, dtype=torch.float64, device='cuda'), requires_grad=True)
         denominator_weights = nn.Parameter(torch.tensor([[
                     -0.06675015696494944,
                     0.17927646217001553,
                     0.03746682605496631,
                     1.6561610853276082e-10
-                ]] * group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
+                ]] * group_size, dtype=torch.float64, device='cuda'), requires_grad=True)
         # numerator_weights.data[1] *= 2
         # numerator_weights.data[2] *= 3
         # numerator_weights.data[3] *= 4
