@@ -158,7 +158,8 @@ class KAT_1DGroupv2(nn.Module):
         assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
 
         # select the first group, and repeat the weights for all groups
-        weight_numerator = self.weight_numerator[0].repeat(self.num_groups, 1)
+        # weight_numerator = self.weight_numerator[0].repeat(self.num_groups, 1)
+        weight_numerator = self.weight_numerator
         weight_denominator = self.weight_denominator[0].repeat(self.num_groups, 1)
         return rational_1dgroup.apply(input, weight_numerator, weight_denominator, self.num_groups)
     
