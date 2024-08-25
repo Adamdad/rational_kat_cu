@@ -1,5 +1,5 @@
 import torch
-import kat_rational
+from kat_rational import rational_1dgroup
 from rational.torch import Rational
 from torch import nn
 
@@ -145,21 +145,6 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     # Concatenate the results along the depth dimension
     return torch.cat(results, dim=2)
 
-class My_rational_1dgroup(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, input, weight_numerator, weight_denominator, group):
-        ctx.save_for_backward(input, weight_numerator, weight_denominator)
-        ctx.group = group
-        x = kat_rational.rational_fwd_1dgroup(input, weight_numerator, weight_denominator, group)
-        return x
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        x, w_numerator, w_denominator = ctx.saved_tensors
-        group = ctx.group
-        d_x, d_weight_numerator, d_weight_denominator = kat_rational.rational_bwd_1dgroup(grad_output, x, w_numerator, w_denominator, group)
-        return d_x, d_weight_numerator, d_weight_denominator, None
-
 def test_vectorized_forward(x, numerator_weights, denominator_weights, group_size=4):
         
         print("Testing forward pass")
@@ -186,7 +171,7 @@ def test_forward(x, numerator_weights, denominator_weights, group_size=4):
     
     rational_output = act(x)
 
-    my_results = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+    my_results = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
 
     print(rational_output)
     print(vector_result)
@@ -215,7 +200,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     numerator_weights.grad.zero_()
     denominator_weights.grad.zero_()
     
-    my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+    my_output = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = numerator_weights.grad.clone()
@@ -281,7 +266,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     start = time.time()
     for _ in range(100):
-        my_output = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        my_output = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         loss = loss_fn(expected_output, my_output)
         loss.backward()
         torch.cuda.synchronize()
@@ -328,7 +313,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     for _ in range(100):
         start = time.time()
-        result = My_rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        result = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         torch.cuda.synchronize()
         used_time += time.time() - start
 
