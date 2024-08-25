@@ -38,7 +38,7 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     model = NeuralNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.Adam(model.parameters(), lr=0.001)
-    optimizer = optim.SGD(model.parameters(), lr=0.03, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     
     transform = transforms.Compose([
         transforms.ToTensor(),
