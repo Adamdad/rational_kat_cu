@@ -176,7 +176,7 @@ def test_backward(x, numerator_weights, denominator_weights, group_size=4):
     
     print("Backward pass test passed")
     
-def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
+def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4, num_iter=500):
     # expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     B, L, D = x.shape
     expected_output = torch.cat([torch.sigmoid(x[:,:,:D//2]), torch.relu(x[:,:,D//2:])], dim=2)
@@ -188,7 +188,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     total_time = 0
     start_time = time.time()
 
-    for _ in range(100):
+    for _ in range(num_iter):
         # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
         output = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         # output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
@@ -215,7 +215,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     print("Time taken by our group bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
     print(numerator_weights, denominator_weights)
     
-def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_size=4):
+def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_size=4, num_iter=500):
     # expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     B, L, D = x.shape
     expected_output = torch.cat([torch.sigmoid(x[:,:,:D//2]), torch.relu(x[:,:,D//2:])], dim=2)
@@ -227,7 +227,7 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     total_time = 0
     start_time = time.time()
 
-    for _ in range(100):
+    for _ in range(num_iter):
         output = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
         loss = loss_fn(expected_output, output)
 
@@ -247,7 +247,7 @@ def benchmark_backward_torch(x, numerator_weights, denominator_weights, group_si
     
     print(numerator_weights, denominator_weights)
 
-def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4):
+def benchmark_backward_rational(x, numerator_weights, denominator_weights, group_size=4, num_iter=500):
     # expected_output = torch.sigmoid(x)  # Full precision for loss computation stability
     loss_fn = torch.nn.MSELoss(reduction='mean')
     
@@ -263,7 +263,7 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     total_time = 0
     start_time = time.time()
 
-    for _ in range(100):
+    for _ in range(num_iter):
         output = model(x)
         loss = loss_fn(expected_output, output)
         optimizer.zero_grad()
