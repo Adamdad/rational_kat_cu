@@ -161,11 +161,11 @@ class KAT_1DGroupv2(nn.Module):
             return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups).squeeze(1)
         elif input.dim() == 4:
             # [B, C, H, W] -> [B, H*W, C]
-            x = input.permute(0, 2, 3, 1).reshape(input.size(0), -1, input.size(1))
+            x = input.permute(0, 2, 3, 1).reshape(input.size(0), -1, input.size(1)).contiguous()
             weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
             x = rational_1dgroup.apply(x, weight_numerator, self.weight_denominator, self.num_groups)
             # [B, H*W, C] -> [B, C, H, W]
-            return x.permute(0, 2, 1).reshape(input.size(0), input.size(1), input.size(2), input.size(3))
+            return x.permute(0, 2, 1).reshape(input.size(0), input.size(1), input.size(2), input.size(3)).contiguous()
         else:
             assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
 
