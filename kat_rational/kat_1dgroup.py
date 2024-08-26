@@ -105,7 +105,7 @@ class KAT_1DGroup(nn.Module):
         return f'num_groups={self.num_groups}, order={self.order}'
     
 class KAT_1DGroupv2(nn.Module):
-    def __init__(self, num_groups=4, mode="searched"):
+    def __init__(self, num_groups=4, mode="gelu"):
         """
         Initialize the KAT_1DGroup module.
 
@@ -155,11 +155,17 @@ class KAT_1DGroupv2(nn.Module):
         Returns:
             Tensor: Processed tensor.
         """
-        assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
+        if input.dim() == 2:
+            input = input.unsqueeze(1)
+            weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
+            return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups).squeeze(1)
+        else:
+            assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
 
-        # select the first group, and repeat the weights for all groups
-        weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
-        return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups)
+            # select the first group, and repeat the weights for all groups
+            weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
+            return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups)
+        
     
     def extra_repr(self):
         """
