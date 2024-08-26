@@ -95,11 +95,11 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     print(f'{label} Testing Accuracy: {accuracy:.2f}%, Total time: {duration:.2f} seconds.')
 
 if __name__ == "__main__":
-    gelu = nn.GELU
-    train_and_benchmark(gelu, 'GELU')
+    # gelu = nn.GELU
+    # train_and_benchmark(gelu, 'GELU')
     
-    rational_activation = Rational
-    train_and_benchmark(rational_activation, 'Rational GELU')
+    # rational_activation = Rational
+    # train_and_benchmark(rational_activation, 'Rational GELU')
 
     # Placeholder for your custom KAT_1DGroup implementation
     # Assuming you have a similar API and it's suitable for convolutional layers
