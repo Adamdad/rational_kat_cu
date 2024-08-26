@@ -44,13 +44,20 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = CIFARNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    
+    transform_train = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomCrop(32, padding=4),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
     
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    dataset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    dataset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
     data_loader = DataLoader(dataset, batch_size=128, shuffle=True)
     test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
