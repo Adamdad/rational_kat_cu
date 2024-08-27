@@ -6,6 +6,7 @@ import json
 
 class rational_1dgroup(torch.autograd.Function):
     @staticmethod
+    @torch.amp.custom_fwd(device_type='cuda', cast_inputs=torch.float32)
     def forward(ctx, input, weight_numerator, weight_denominator, group):
         """
         Forward pass of the custom autograd function.
@@ -26,6 +27,7 @@ class rational_1dgroup(torch.autograd.Function):
         return x
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type='cuda')
     def backward(ctx, grad_output):
         """
         Backward pass of the custom autograd function.
@@ -145,8 +147,6 @@ class KAT_Group(nn.Module):
         except json.JSONDecodeError:
             print("Error decoding JSON.")
             
-            
-    @torch.autocast(device_type="cuda", dtype=torch.float32)
     def forward(self, input):
         """
         Forward pass of the module.
