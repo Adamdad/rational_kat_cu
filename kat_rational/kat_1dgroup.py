@@ -107,7 +107,7 @@ class KAT_1DGroup(nn.Module):
         return f'num_groups={self.num_groups}, order={self.order}'
 
 class KAT_Group(nn.Module):
-    def __init__(self, num_groups=8, mode="swish"):
+    def __init__(self, num_groups=8, mode="gelu"):
         """
         Initialize the KAT_1DGroup module.
 
@@ -121,7 +121,7 @@ class KAT_Group(nn.Module):
         # Initialize parameters for each group
         self.initialize(mode=mode)
         
-    def initialize(self, mode="swish"):
+    def initialize(self, mode="gelu"):
         """
         Initialize weights from a JSON file based on the specified mode.
 
