@@ -144,7 +144,9 @@ class KAT_Group(nn.Module):
             print("Initialization JSON file not found.")
         except json.JSONDecodeError:
             print("Error decoding JSON.")
-    
+            
+            
+    @torch.autocast(dtype=torch.float32)
     def forward(self, input):
         """
         Forward pass of the module.
@@ -158,6 +160,7 @@ class KAT_Group(nn.Module):
 
         assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
 
+    
         # select the first group, and repeat the weights for all groups
         weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
         return rational_1dgroup.apply(input, weight_numerator, self.weight_denominator, self.num_groups)
