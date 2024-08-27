@@ -146,7 +146,7 @@ class KAT_Group(nn.Module):
             print("Error decoding JSON.")
             
             
-    @torch.autocast(dtype=torch.float32)
+    @torch.autocast(device_type="cuda", dtype=torch.float32)
     def forward(self, input):
         """
         Forward pass of the module.
