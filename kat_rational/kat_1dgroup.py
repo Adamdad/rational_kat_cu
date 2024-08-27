@@ -107,7 +107,7 @@ class KAT_1DGroup(nn.Module):
         return f'num_groups={self.num_groups}, order={self.order}'
 
 class KAT_Group(nn.Module):
-    def __init__(self, num_groups=4, mode="gelu"):
+    def __init__(self, num_groups=4, mode="swish"):
         """
         Initialize the KAT_1DGroup module.
 
@@ -121,7 +121,7 @@ class KAT_Group(nn.Module):
         # Initialize parameters for each group
         self.initialize(mode=mode)
         
-    def initialize(self, mode="gelu"):
+    def initialize(self, mode="swish"):
         """
         Initialize weights from a JSON file based on the specified mode.
 
@@ -147,8 +147,6 @@ class KAT_Group(nn.Module):
         except json.JSONDecodeError:
             print("Error decoding JSON.")
             
-            
-    # @torch.autocast(device_type="cuda", dtype=torch.float32)
     def forward(self, input):
         """
         Forward pass of the module.
@@ -161,9 +159,6 @@ class KAT_Group(nn.Module):
         """
 
         assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
-        # print("input.type()", input.type()) 
-        # print("self.weight_numerator.type()", self.weight_numerator.type())
-        # print("self.weight_denominator.type(", self.weight_denominator.type())
     
         # select the first group, and repeat the weights for all groups
         weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
