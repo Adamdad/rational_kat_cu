@@ -6,6 +6,7 @@ import json
 
 class rational_1dgroup(torch.autograd.Function):
     @staticmethod
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(ctx, input, weight_numerator, weight_denominator, group):
         """
         Forward pass of the custom autograd function.
@@ -26,6 +27,7 @@ class rational_1dgroup(torch.autograd.Function):
         return x
 
     @staticmethod
+    @torch.cuda.amp.custom_bwd
     def backward(ctx, grad_output):
         """
         Backward pass of the custom autograd function.
@@ -146,7 +148,7 @@ class KAT_Group(nn.Module):
             print("Error decoding JSON.")
             
             
-    @torch.autocast(device_type="cuda", dtype=torch.float32)
+    # @torch.autocast(device_type="cuda", dtype=torch.float32)
     def forward(self, input):
         """
         Forward pass of the module.
@@ -159,9 +161,9 @@ class KAT_Group(nn.Module):
         """
 
         assert input.dim() == 3, "Input tensor must be 3D. Of size (batch, length, channels)."
-        print("input.type()", input.type()) 
-        print("self.weight_numerator.type()", self.weight_numerator.type())
-        print("self.weight_denominator.type(", self.weight_denominator.type())
+        # print("input.type()", input.type()) 
+        # print("self.weight_numerator.type()", self.weight_numerator.type())
+        # print("self.weight_denominator.type(", self.weight_denominator.type())
     
         # select the first group, and repeat the weights for all groups
         weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
