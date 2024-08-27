@@ -107,7 +107,7 @@ class KAT_1DGroup(nn.Module):
         return f'num_groups={self.num_groups}, order={self.order}'
 
 class KAT_Group(nn.Module):
-    def __init__(self, num_groups=4, mode="swish"):
+    def __init__(self, num_groups=8, mode="swish"):
         """
         Initialize the KAT_1DGroup module.
 
