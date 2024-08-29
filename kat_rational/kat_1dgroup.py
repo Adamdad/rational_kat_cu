@@ -121,6 +121,15 @@ class KAT_Group(nn.Module):
         # Initialize parameters for each group
         self.initialize(mode=mode)
         
+    def init_info(self):
+        """
+        Initialize weights from a JSON file based on the specified mode."""
+        cfd = os.path.dirname(os.path.realpath(__file__))
+        with open(f'{cfd}/init.json') as json_file:
+            data = json.load(json_file)
+        return data
+                
+        
     def initialize(self, mode="gelu"):
         """
         Initialize weights from a JSON file based on the specified mode.

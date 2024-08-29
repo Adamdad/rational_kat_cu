@@ -1,75 +1,117 @@
-import torch
-from torch import nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from kat_rational import KAT_1DGroup
-import time
 import numpy as np
-import random
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from scipy.special import erf
 
-def set_random_seed(seed_value=42):
-    torch.manual_seed(seed_value)
-    torch.cuda.manual_seed(seed_value)
-    torch.cuda.manual_seed_all(seed_value)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed_value)
-    random.seed(seed_value)
+# Define the complex function model
+def complex_function(x, a0, a1, a2, a3, a4, a5, b1, b2, b3, b4):
+    numerator = a0 + a1 * x + a2 * (x**2) + a3 * (x**3) + a4 * (x**4) + a5 * (x**5)
+    denominator = 1 + np.abs(b1 * x + b2 * (x**2) + b3 * (x**3) + b4 * (x**4))
+    return (numerator / denominator)
 
-def erfc_softplus_squared_torch(x):
-    softplus = torch.nn.Softplus()
-    softplus_x = softplus(x)
-    erfc_x = torch.erfc(softplus_x)
-    return erfc_x ** 2
+# Define the activation functions
+def relu(x):
+    return np.maximum(0, x)
 
-def train_and_benchmark(activation_func, func, label, epochs=3000, seed=42):
-    set_random_seed(seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = activation_func.to(device)
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.006)
+def gelu(x):
+    return x * 0.5 * (1 + erf(x / np.sqrt(2)))
 
-    # Learning rate scheduler
-    # scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma = 1.0)  # Decays the learning rate by a factor of 0.9 each epoch
+def silu(x):  # also known as Swish
+    return x / (1 + np.exp(-x))
 
-    x = torch.linspace(-8, 8, 1000).unsqueeze(0).unsqueeze(0).to(device)
-    y = func(x).to(device)
-    model.train()
-    start_time = time.time()
-    for epoch in range(epochs):
-        optimizer.zero_grad()
-        outputs = model(x)
-        loss = criterion(outputs, y)
-        loss.backward()
-        optimizer.step()
-        # if epoch % 100:
-        #     scheduler.step()  # Update the learning rate
+def mish(x):
+    return x * np.tanh(np.log(1 + np.exp(x)))
 
-        print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
+def GEGLU(x):
+    return gelu(x) * x
+
+def ReGLU(x):
+    return relu(x) * x 
+
+def Swish(x):
+    return x / (1 + np.exp(-x))
+
+def SwishGLU(x):
+    return Swish(x) * x
+
+def  erfc_Softplus_2(x):
+    # erfc(Softplus(x))2
+    return (1 - erf(np.log(1 + np.exp(x))))**2
+
+# Plotting enhancements
+def plot_results(x_data, y_data, y_fitted, function_name):
+    label_size = 24
+    legend_size = 18
+    plt.figure(figsize=(10, 6))
+    plt.plot(x_data, y_data, 'r-', label=f'{function_name} Function', linewidth=4)
+    plt.plot(x_data, y_fitted, 'b--', label='Fitted Rational', linewidth=3)
+
+    # Add details for better readability and presentation
+    # plt.title(f'Fitting Complex Function to {function_name}', fontsize=16)
+    plt.xlabel('x', fontsize=label_size)
+    plt.ylabel('y', fontsize=label_size)
+    plt.legend(fontsize=label_size)
+    plt.grid(True)  # Turn on grid
+    plt.tight_layout()  # Adjust layout to not cut off elements
+
+    # Increase tick font size
+    plt.xticks(fontsize=legend_size)
+    plt.yticks(fontsize=legend_size)
+
+    # plt.show()
+    plt.savefig(f'{function_name}_fit.pdf')
+
+
+# Function to fit and plot
+def fit_and_plot_activation(function_name):
+    # Select the activation function
+    activation_functions = {
+        'ReLU': relu,
+        'GELU': gelu,
+        'SiLU': silu,
+        'Mish': mish,
+        'GEGLU': GEGLU,
+        'ReGLU': ReGLU,
+        'Swish': Swish,
+        'SwishGLU': SwishGLU,
+        'erfc_Softplus_2': erfc_Softplus_2
+    }
     
-    duration = time.time() - start_time
-    print(f'{label} Training completed in {duration:.2f} seconds.')
-    
-    # Plot the output
-    import matplotlib.pyplot as plt
-    pred = model(x).squeeze(0).squeeze(0).detach().cpu().numpy()
-    x = x.squeeze(0).squeeze(0).cpu().numpy()
-    y = y.squeeze(0).squeeze(0).cpu().numpy()
-    
-    plt.plot(x, y, label='True')
-    plt.plot(x, pred, label='Predicted')
-    plt.xlabel("Input")
-    
-    plt.ylabel("Output")
-    plt.title("Response of " + label)
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(label + ".png")
-    
+    if function_name not in activation_functions:
+        print("Invalid function name. Choose 'ReLU', 'GELU', or 'SiLU'.")
+        return
 
-if __name__ == "__main__":
-    func = erfc_softplus_squared_torch
-    kat_activation = KAT_1DGroup(num_groups=1) # Placeholder for KAT_1DGroup if not accessible
-    train_and_benchmark(kat_activation, func, 'KAT 1DGroup (as ReLU placeholder)')
-    print(kat_activation.weight_numerator, kat_activation.weight_denominator)
+    activation_func = activation_functions[function_name]
+
+    # Generate sample data
+    x_data = np.linspace(-3, 3, 500)
+    y_data = activation_func(x_data)
+
+    # Initial parameter guesses
+    initial_guesses = [0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+
+    # Fit the complex function to the activation function data
+    try:
+        popt, pcov = curve_fit(complex_function, x_data, y_data, p0=initial_guesses)
+        print(f"Fitted coefficients for {function_name}: {popt}")
+    except Exception as e:
+        print(f"An error occurred during fitting: {e}")
+        return
+
+    # Generate y values from the fitted model
+    y_fitted = complex_function(x_data, *popt)
+
+    # Enhanced plotting function
+    plot_results(x_data, y_data, y_fitted, function_name)
+    
+# Example usage
+fit_and_plot_activation('ReLU')
+fit_and_plot_activation('GELU')
+# fit_and_plot_activation('SiLU')
+fit_and_plot_activation('Swish')
+# fit_and_plot_activation('Mish')
+fit_and_plot_activation('GEGLU')
+fit_and_plot_activation('ReGLU')
+fit_and_plot_activation('SwishGLU')
+fit_and_plot_activation('erfc_Softplus_2')
+
