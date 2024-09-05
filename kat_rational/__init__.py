@@ -1,1 +1,1 @@
-from .kat_1dgroup import rational_1dgroup, KAT_1DGroup, KAT_1DGroupv2, KAT_Group
+from .kat_1dgroup import rational_1dgroup, KAT_Group
