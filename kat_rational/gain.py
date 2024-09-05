@@ -39,16 +39,21 @@ def calculate_gain(name):
     return gain, x_samples, rational_values
 
 calculate_gain('gelu')
+calculate_gain('swish')
+calculate_gain('swishglu')
+calculate_gain('geglu')
+calculate_gain('tanh')
+calculate_gain('sigmoid')
 
 # plot
 
-gain, x_samples, rational_values = calculate_gain('gelu')
-plt.plot(x_samples, rational_values, 'r.', label='Rational Function')
-plt.plot(x_samples, gelu(x_samples), 'b.', label='GELU Function')
+# gain, x_samples, rational_values = calculate_gain('gelu')
+# plt.plot(x_samples, rational_values, 'r.', label='Rational Function')
+# plt.plot(x_samples, gelu(x_samples), 'b.', label='GELU Function')
 # plt.plot(x_samples, swish(x_samples), 'b.', label='Swish Function')
 
-plt.xlim(-3, 3)
-plt.xlabel('x')
-plt.ylabel('y')
-plt.legend()
-plt.show()
+# plt.xlim(-3, 3)
+# plt.xlabel('x')
+# plt.ylabel('y')
+# plt.legend()
+# plt.show()

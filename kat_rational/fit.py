@@ -84,7 +84,7 @@ def fit_and_plot_activation(function_name):
     activation_func = activation_functions[function_name]
 
     # Generate sample data
-    x_data = np.linspace(-3, 3, 500)
+    x_data = np.linspace(-3, 3, 1000)
     y_data = activation_func(x_data)
 
     # Initial parameter guesses
