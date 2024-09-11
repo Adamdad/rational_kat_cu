@@ -68,7 +68,6 @@ class KAT_Group(nn.Module):
             data = json.load(json_file)
         return data
                 
-        
     def initialize(self, mode="gelu"):
         """
         Initialize weights from a JSON file based on the specified mode.
