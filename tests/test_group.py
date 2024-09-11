@@ -287,46 +287,65 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
 
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
-    print("Benchmarking forward pass")
-    B, L, D = x.shape
-    used_time = 0
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    for _ in range(100):
-        start = time.time()
-        result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
-        torch.cuda.synchronize()
-        used_time += time.time() - start
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
-    used_time /= 100
-    print("Time taken for loop forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
+    """
+    Benchmarking the forward pass of different methods for rational function computation.
     
-    used_time = 0
+    Args:
+        x (Tensor): Input tensor of shape (B, L, D).
+        numerator_weights (Tensor): Weights for the numerator polynomial.
+        denominator_weights (Tensor): Weights for the denominator polynomial.
+        group_size (int): Group size for rational function.
+        
+    Returns:
+        dict: Results containing throughput and peak memory for each method.
+    """
+    
+    B, L, D = x.shape
+    num_batches = 100  # Number of iterations to run for benchmarking
+    
+    print("Benchmarking forward pass")
+    
+    results = {}
+
+    # Method 1: Loop-based processing groups
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    for _ in range(100):
-        start = time.time()
+    start_time = time.time()
+    for _ in range(num_batches):
+        result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
+        torch.cuda.synchronize()  # Ensure CUDA kernel completion
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for loop forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['loop_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+
+    # Method 2: Rational_CUDA_A_1DGroup (vectorized CUDA)
+    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
+    start_time = time.time()
+    for _ in range(num_batches):
         result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
         torch.cuda.synchronize()
-        used_time += time.time() - start
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for torch vectorized forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['vectorized_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
 
-    used_time /= 100
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
-    print("Time taken for torch vectorized forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
-    
-    
-    used_time = 0
+    # Method 3: rational_1dgroup.apply (CUDA autograd custom function)
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    for _ in range(100):
-        start = time.time()
+    start_time = time.time()
+    for _ in range(num_batches):
         result = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
         torch.cuda.synchronize()
-        used_time += time.time() - start
-
-    used_time /= 100
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert bytes to MB
-    print("Time taken for cuda forward pass: {:.4f} seconds".format(used_time), "Peak memory:", peak_mem)
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for cuda forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['cuda_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    print("#"*50)
-    return result
+    print("#" * 50)
+    
+    return results
 
 if __name__=="__main__":
     group_size = 8
@@ -352,7 +371,7 @@ if __name__=="__main__":
     # numerator_weights.data[3] *= 4
 
     # Input tensor
-    x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
+    x = torch.randn(64, 1000, 512, dtype=torch.float32, device='cuda')
     # test_forward(x, numerator_weights, denominator_weights, group_size)
     benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     # test_backward(x, numerator_weights, denominator_weights, group_size)
