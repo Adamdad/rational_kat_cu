@@ -390,7 +390,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     # Method 7: PReLU activation function
     start_time = time.time()
     for _ in range(num_batches):
-        result = torch.nn.functional.prelu(x)
+        result = torch.nn.functional.prelu(x, 0)
         torch.cuda.synchronize()
     total_time = time.time() - start_time
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
