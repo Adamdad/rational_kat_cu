@@ -301,7 +301,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     """
     
     B, L, D = x.shape
-    num_batches = 100  # Number of iterations to run for benchmarking
+    num_batches = 1000  # Number of iterations to run for benchmarking
     
     print("Benchmarking forward pass")
     
