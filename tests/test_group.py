@@ -365,6 +365,39 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     print(f"Throughput for ReLU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['relu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
+    # Method 5: Silu activation function
+    start_time = time.time()
+    for _ in range(num_batches):
+        result = torch.nn.functional.silu(x)
+        torch.cuda.synchronize()
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for silu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['silu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    
+    # Method 6: Sigmoid activation function
+    start_time = time.time()
+    for _ in range(num_batches):
+        result = torch.nn.functional.sigmoid(x)
+        torch.cuda.synchronize()
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for sigmoid forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['sigmoid_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    
+    # Method 7: PReLU activation function
+    start_time = time.time()
+    for _ in range(num_batches):
+        result = torch.nn.functional.prelu(x)
+        torch.cuda.synchronize()
+    total_time = time.time() - start_time
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    throughput = num_batches / total_time
+    print(f"Throughput for prelu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    results['prelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    
     
     print("#" * 50)
     
