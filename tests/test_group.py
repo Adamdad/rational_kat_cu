@@ -387,10 +387,11 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     print(f"Throughput for sigmoid forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['sigmoid_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
+    act = torch.nn.PReLU().cuda()
     # Method 7: PReLU activation function
     start_time = time.time()
     for _ in range(num_batches):
-        result = torch.nn.functional.prelu(x, 0)
+        result = act(x)
         torch.cuda.synchronize()
     total_time = time.time() - start_time
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
