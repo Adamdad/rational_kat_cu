@@ -329,7 +329,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     return result
 
 if __name__=="__main__":
-    group_size = 4
+    group_size = 8
     # Define tensors for the numerator and denominator coefficients
     # numerator of size (group_size, 5) and denominator of size (group_size, 4)
     numerator_weights = nn.Parameter(torch.tensor([
@@ -352,10 +352,10 @@ if __name__=="__main__":
     # numerator_weights.data[3] *= 4
 
     # Input tensor
-    x = torch.randn(10, 1, 1280, dtype=torch.float32, device='cuda')
-    test_forward(x, numerator_weights, denominator_weights, group_size)
-    # benchmark_forward(x, numerator_weights, denominator_weights, group_size)
-    test_backward(x, numerator_weights, denominator_weights, group_size)
+    x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
+    # test_forward(x, numerator_weights, denominator_weights, group_size)
+    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+    # test_backward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
     

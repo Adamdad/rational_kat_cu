@@ -283,8 +283,8 @@ def benchmark_backward_rational(x, numerator_weights, denominator_weights, group
     print(model.numerator, model.denominator)
 if __name__=="__main__":
     x = torch.randn(64, 256, 320, dtype=torch.float32, device='cuda')
-    for func in [benchmark_backward, benchmark_backward_torch, benchmark_backward_rational]:
-        group_size = 4
+    for func in [benchmark_backward, benchmark_backward_torch]:
+        group_size = 8
         # Define tensors for the numerator and denominator coefficients
         # numerator of size (group_size, 5) and denominator of size (group_size, 4)
         numerator_weights = nn.Parameter(torch.tensor([
@@ -302,10 +302,7 @@ if __name__=="__main__":
                     0.03746682605496631,
                     1.6561610853276082e-10
                 ]] * group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
-        # numerator_weights.data[1] *= 2
-        # numerator_weights.data[2] *= 3
-        # numerator_weights.data[3] *= 4
-
+        
         # Input tensor
 
         func(x, numerator_weights, denominator_weights, group_size)
