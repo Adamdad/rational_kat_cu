@@ -343,61 +343,61 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     print(f"Throughput for cuda forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['cuda_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 4: GELU activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.gelu(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
-    print(f"Throughput for GELU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
-    results['gelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    # # Method 4: GELU activation function
+    # start_time = time.time()
+    # for _ in range(num_batches):
+    #     result = torch.nn.functional.gelu(x)
+    #     torch.cuda.synchronize()
+    # total_time = time.time() - start_time
+    # peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    # throughput = num_batches / total_time
+    # print(f"Throughput for GELU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    # results['gelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 5: ReLU activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.relu(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
-    print(f"Throughput for ReLU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
-    results['relu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    # # Method 5: ReLU activation function
+    # start_time = time.time()
+    # for _ in range(num_batches):
+    #     result = torch.nn.functional.relu(x)
+    #     torch.cuda.synchronize()
+    # total_time = time.time() - start_time
+    # peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    # throughput = num_batches / total_time
+    # print(f"Throughput for ReLU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    # results['relu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 5: Silu activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.silu(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
-    print(f"Throughput for silu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
-    results['silu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    # # Method 5: Silu activation function
+    # start_time = time.time()
+    # for _ in range(num_batches):
+    #     result = torch.nn.functional.silu(x)
+    #     torch.cuda.synchronize()
+    # total_time = time.time() - start_time
+    # peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    # throughput = num_batches / total_time
+    # print(f"Throughput for silu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    # results['silu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 6: Sigmoid activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.sigmoid(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
-    print(f"Throughput for sigmoid forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
-    results['sigmoid_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    # # Method 6: Sigmoid activation function
+    # start_time = time.time()
+    # for _ in range(num_batches):
+    #     result = torch.nn.functional.sigmoid(x)
+    #     torch.cuda.synchronize()
+    # total_time = time.time() - start_time
+    # peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    # throughput = num_batches / total_time
+    # print(f"Throughput for sigmoid forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    # results['sigmoid_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    act = torch.nn.PReLU().cuda()
-    # Method 7: PReLU activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = act(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
-    print(f"Throughput for prelu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
-    results['prelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
+    # act = torch.nn.PReLU().cuda()
+    # # Method 7: PReLU activation function
+    # start_time = time.time()
+    # for _ in range(num_batches):
+    #     result = act(x)
+    #     torch.cuda.synchronize()
+    # total_time = time.time() - start_time
+    # peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
+    # throughput = num_batches / total_time
+    # print(f"Throughput for prelu forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
+    # results['prelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
     
     print("#" * 50)
@@ -405,32 +405,34 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     return results
 
 if __name__=="__main__":
-    group_size = 8
-    # Define tensors for the numerator and denominator coefficients
-    # numerator of size (group_size, 5) and denominator of size (group_size, 4)
-    numerator_weights = nn.Parameter(torch.tensor([
-        [
-                -0.0012423594497499122,
-                0.5080497063245629,
-                0.41586363182937475,
-                0.13022718688035761,
-                0.024355900098993424,
-                0.00290283948155535
-            ]]*group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
-    denominator_weights = nn.Parameter(torch.tensor([[
-                -0.06675015696494944,
-                0.17927646217001553,
-                0.03746682605496631,
-                1.6561610853276082e-10
-            ]] * group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
-    # numerator_weights.data[1] *= 2
-    # numerator_weights.data[2] *= 3
-    # numerator_weights.data[3] *= 4
+    for group_size in [1, 2, 4, 8, 16, 32]:
+        print(f"Group size: {group_size}")
+    # group_size = 8
+        # Define tensors for the numerator and denominator coefficients
+        # numerator of size (group_size, 5) and denominator of size (group_size, 4)
+        numerator_weights = nn.Parameter(torch.tensor([
+            [
+                    -0.0012423594497499122,
+                    0.5080497063245629,
+                    0.41586363182937475,
+                    0.13022718688035761,
+                    0.024355900098993424,
+                    0.00290283948155535
+                ]]*group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
+        denominator_weights = nn.Parameter(torch.tensor([[
+                    -0.06675015696494944,
+                    0.17927646217001553,
+                    0.03746682605496631,
+                    1.6561610853276082e-10
+                ]] * group_size, dtype=torch.float32, device='cuda'), requires_grad=True)
+        # numerator_weights.data[1] *= 2
+        # numerator_weights.data[2] *= 3
+        # numerator_weights.data[3] *= 4
 
-    # Input tensor
-    x = torch.randn(64, 1000, 512, dtype=torch.float32, device='cuda')
-    # test_forward(x, numerator_weights, denominator_weights, group_size)
-    benchmark_forward(x, numerator_weights, denominator_weights, group_size)
+        # Input tensor
+        x = torch.randn(64, 1000, 512, dtype=torch.float32, device='cuda')
+        # test_forward(x, numerator_weights, denominator_weights, group_size)
+        benchmark_forward(x, numerator_weights, denominator_weights, group_size)
     # test_backward(x, numerator_weights, denominator_weights, group_size)
     # benchmark_backward(x, numerator_weights, denominator_weights, group_size)
     
