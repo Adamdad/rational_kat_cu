@@ -1,6 +1,6 @@
 # CUDA Rational Function for Kolmogorov–Arnold Transformer (KAT)
 
-This CUDA C++ extension facilitates the use of rational functions in Kolmogorov–Arnold Transformers (KAT) for neural networks.
+This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT).
 
 # Installation 
 To install the extension, follow these steps:
@@ -47,7 +47,9 @@ class KAN(nn.Module):
         return x
 ```
 
-Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively.
+Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively. 
+
+[ ] We will try to implement the 2D version, with `[B, C, H, W]` soon. Stay tuned.
 
 PS: Remember to `from kat_rational import KAT_Group` after `import torch`, to avoid errors.
 
