@@ -49,7 +49,7 @@ class KAN(nn.Module):
 
 Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively. 
 
-[ ] We will try to implement the 2D version, with `[B, C, H, W]` soon. Stay tuned.
+- [ ] We will try to implement the 2D version, with `[B, C, H, W]` soon. Stay tuned.
 
 PS: Remember to `from kat_rational import KAT_Group` after `import torch`, to avoid errors.
 
