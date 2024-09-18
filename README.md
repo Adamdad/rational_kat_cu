@@ -1,6 +1,6 @@
 # CUDA Rational Function for Kolmogorov–Arnold Transformer (KAT)
 
-This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT).
+This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT). It support the training and inference of https://github.com/Adamdad/kat.
 
 # Installation 
 To install the extension, follow these steps:
