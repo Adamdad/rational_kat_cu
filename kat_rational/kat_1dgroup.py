@@ -3,7 +3,7 @@ import kat_rational_cu
 from torch import nn
 import os
 import json
-from .rational_cuda_a_1dgroup import Rational_CUDA_A_1DGroup
+from .kat_1dgroup_torch import Rational_CUDA_A_1DGroup
 
 class rational_1dgroup(torch.autograd.Function):
     @staticmethod
