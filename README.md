@@ -53,6 +53,8 @@ Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, represe
 
 PS: Remember to `from kat_rational import KAT_Group` after `import torch`, to avoid errors.
 
+PPS: I'm not a CUDA expert 😅. If you run into any issues or have suggestions for the code, please feel free to reach out or submit a pull request! 🚀
+
 # Add new function 
 
 To add new functions to the module:
