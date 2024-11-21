@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.special import erf
+from matplotlib.ticker import FormatStrFormatter
 
 # Define the complex function model
 def complex_function(x, a0, a1, a2, a3, a4, a5, b1, b2, b3, b4):
@@ -61,7 +62,40 @@ def plot_results(x_data, y_data, y_fitted, function_name):
     # plt.show()
     plt.savefig(f'{function_name}_fit.pdf')
 
+# Plotting enhancements with MSE calculation
+def plot_results_with_mse(x_data, y_data, y_fitted, function_name):
+    # Calculate MSE
+    mse = np.mean((y_data - y_fitted) ** 2)
 
+    label_size = 24
+    legend_size = 24
+    plt.figure(figsize=(10, 6))
+
+    # Plot original and fitted data
+    plt.plot(x_data, y_data, 'r-', label=f'{function_name} Function', linewidth=4)
+    plt.plot(x_data, y_fitted, 'b--', label='Fitted Rational', linewidth=3)
+
+    # Annotate plot with MSE in scientific notation at bottom-right corner
+    plt.text(0.95, 0.05, f'MSE: {mse:.2e}', fontsize=legend_size, transform=plt.gca().transAxes,
+             horizontalalignment='right', verticalalignment='bottom', 
+             bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray"))
+    # Label axes and add legend
+    plt.xlabel('x', fontsize=label_size)
+    plt.ylabel('y', fontsize=label_size)
+    plt.legend(fontsize=legend_size)
+    plt.grid(True)  # Turn on grid
+    
+
+    # Adjust tick font size
+    plt.xticks(fontsize=legend_size)
+    plt.yticks(fontsize=legend_size)
+    plt.tight_layout()  # Adjust layout to prevent cut-off
+    # Format y-axis ticks to 1 decimal place
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+    # Save plot to file
+    plt.savefig(f'{function_name}_fit_with_mse.pdf')
+    
 # Function to fit and plot
 def fit_and_plot_activation(function_name):
     # Select the activation function
@@ -102,7 +136,7 @@ def fit_and_plot_activation(function_name):
     y_fitted = complex_function(x_data, *popt)
 
     # Enhanced plotting function
-    plot_results(x_data, y_data, y_fitted, function_name)
+    plot_results_with_mse(x_data, y_data, y_fitted, function_name)
     
 # Example usage
 fit_and_plot_activation('ReLU')
