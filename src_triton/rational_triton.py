@@ -9,42 +9,52 @@ def rational_fwd_kernel(
     BLOCK_SIZE: tl.constexpr
 ):
     pid = tl.program_id(axis=0)
-    idx = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    mask = idx < x_size
+    offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = offs < x_size
 
-    x = tl.load(x_ptr + idx, mask=mask)
-    d_index = idx % D
+    # Load input elements.
+    x_val = tl.load(x_ptr + offs, mask=mask)
+
+    # Determine d index and group index.
+    d_index = offs % D
     g_index = d_index // D_per_group
 
-    a_idx = g_index * 6
-    b_idx = g_index * 4
+    # Compute coefficient offsets.
+    a_offset = g_index * 6
+    b_offset = g_index * 4
 
-    # Load coefficients for a (6 elements)
-    s_a = tl.zeros((6,), dtype=tl.float32)
-    for i in tl.static_range(6):  # Use static_range for compile-time loop
-        s_a[i] = tl.load(a_ptr + a_idx + i)
+    # Load numerator coefficients.
+    s_a0 = tl.load(a_ptr + a_offset + 0)
+    s_a1 = tl.load(a_ptr + a_offset + 1)
+    s_a2 = tl.load(a_ptr + a_offset + 2)
+    s_a3 = tl.load(a_ptr + a_offset + 3)
+    s_a4 = tl.load(a_ptr + a_offset + 4)
+    s_a5 = tl.load(a_ptr + a_offset + 5)
 
-    # Load coefficients for b (4 elements)
-    s_b = tl.zeros((4,), dtype=tl.float32)
-    for i in tl.static_range(4):  # Use static_range for compile-time loop
-        s_b[i] = tl.abs(tl.load(b_ptr + b_idx + i))
+    # Load denominator coefficients (using absolute value).
+    s_b0 = tl.abs(tl.load(b_ptr + b_offset + 0))
+    s_b1 = tl.abs(tl.load(b_ptr + b_offset + 1))
+    s_b2 = tl.abs(tl.load(b_ptr + b_offset + 2))
+    s_b3 = tl.abs(tl.load(b_ptr + b_offset + 3))
 
-    xp1 = x
-    abs_xp1 = tl.abs(xp1)
+    abs_x = tl.abs(x_val)
 
-    # Compute P using Horner's method
-    P = s_a[5]
-    for i in tl.static_range(4, -1, -1):  # Use static_range for compile-time loop
-        P = P * xp1 + s_a[i]
+    # Compute numerator polynomial P(x) via Horner's method.
+    P = s_a5
+    P = tl.fma(P, x_val, s_a4)
+    P = tl.fma(P, x_val, s_a3)
+    P = tl.fma(P, x_val, s_a2)
+    P = tl.fma(P, x_val, s_a1)
+    P = tl.fma(P, x_val, s_a0)
 
-    # Compute Q using Horner's method
-    Q = s_b[3]
-    for i in tl.static_range(2, -1, -1):  # Use static_range for compile-time loop
-        Q = Q * abs_xp1 + s_b[i]
-    Q = Q * abs_xp1 + 1.0
+    # Compute denominator polynomial Q(x).
+    Q = s_b3
+    Q = tl.fma(Q, abs_x, s_b2)
+    Q = tl.fma(Q, abs_x, s_b1)
+    Q = tl.fma(Q, abs_x, s_b0)
+    Q = tl.fma(Q, abs_x, 1.0)
 
-    result = P / Q
-    tl.store(result_ptr + idx, result, mask=mask)
+    tl.store(result_ptr + offs, P / Q, mask=mask)
 
 def rational_fwd_triton(x, n, d, group):
     B, L, D = x.shape
