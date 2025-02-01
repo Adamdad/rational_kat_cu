@@ -22,12 +22,12 @@ def rational_fwd_kernel(
     # Load coefficients for a (6 elements)
     s_a = tl.zeros((6,), dtype=tl.float32)
     for i in tl.static_range(6):  # Use static_range for compile-time loop
-        s_a = tl.set(s_a, i, tl.load(a_ptr + a_idx + i))
+        s_a[i] = tl.load(a_ptr + a_idx + i)
 
     # Load coefficients for b (4 elements)
     s_b = tl.zeros((4,), dtype=tl.float32)
     for i in tl.static_range(4):  # Use static_range for compile-time loop
-        s_b = tl.set(s_b, i, tl.abs(tl.load(b_ptr + b_idx + i)))
+        s_b[i] = tl.abs(tl.load(b_ptr + b_idx + i))
 
     xp1 = x
     abs_xp1 = tl.abs(xp1)
@@ -84,12 +84,13 @@ def rational_bwd_kernel(
     # Load coefficients for a (6 elements)
     s_a = tl.zeros((6,), dtype=tl.float32)
     for i in tl.static_range(6):  # Use static_range for compile-time loop
-        s_a = tl.set(s_a, i, tl.load(a_ptr + a_idx + i))
+        s_a[i] = tl.load(a_ptr + a_idx + i)
 
     # Load coefficients for b (4 elements)
     s_b = tl.zeros((4,), dtype=tl.float32)
     for i in tl.static_range(4):  # Use static_range for compile-time loop
-        s_b = tl.set(s_b, i, tl.load(b_ptr + b_idx + i))
+        s_b[i] = tl.load(b_ptr + b_idx + i)
+        
     s_b_abs = tl.abs(s_b)
 
     xp = x
@@ -97,15 +98,15 @@ def rational_bwd_kernel(
 
     # Compute powers of xp
     xp_powers = tl.zeros((5,), dtype=tl.float32)
-    xp_powers = tl.set(xp_powers, 0, xp)
+    xp_powers[0] = xp
     for i in tl.static_range(1, 5):  # Use static_range for compile-time loop
-        xp_powers = tl.set(xp_powers, i, xp_powers[i-1] * xp)
+        xp_powers[i] = xp_powers[i-1] * xp
 
     # Compute powers of axp
     axp_powers = tl.zeros((4,), dtype=tl.float32)
-    axp_powers = tl.set(axp_powers, 0, axp)
+    axp_powers[0] = axp
     for i in tl.static_range(1, 4):  # Use static_range for compile-time loop
-        axp_powers = tl.set(axp_powers, i, axp_powers[i-1] * axp)
+        axp_powers[i] = axp_powers[i-1] * axp
 
     # Compute P, Q, R, S
     P = s_a[0] + s_a[1] * xp_powers[0] + s_a[2] * xp_powers[1] + s_a[3] * xp_powers[2] + s_a[4] * xp_powers[3] + s_a[5] * xp_powers[4]
@@ -122,12 +123,12 @@ def rational_bwd_kernel(
     local_da = tl.zeros((6,), dtype=tl.float32)
     local_db = tl.zeros((4,), dtype=tl.float32)
 
-    local_da = tl.set(local_da, 0, 1.0 / Q * grad_o)
+    local_da[0] = 1.0 / Q * grad_o
     for i in tl.static_range(1, 6):  # Use static_range for compile-time loop
-        local_da = tl.set(local_da, i, xp_powers[i-1] / Q * grad_o)
+        local_da[i] = xp_powers[i-1] / Q * grad_o
 
     for i in tl.static_range(0, 4):  # Use static_range for compile-time loop
-        local_db = tl.set(local_db, i, mpq2 * tl.sign(s_b[i]) * axp_powers[i] * grad_o)
+        local_db[i] = mpq2 * tl.sign(s_b[i]) * axp_powers[i] * grad_o
 
     # Accumulate gradients for a and b
     for i in tl.static_range(0, 6):  # Use static_range for compile-time loop
