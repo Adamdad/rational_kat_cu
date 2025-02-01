@@ -35,6 +35,9 @@ def Swish(x):
 def SwishGLU(x):
     return Swish(x) * x
 
+def sin(x):
+    return np.sin(x*5)
+
 def  erfc_Softplus_2(x):
     # erfc(Softplus(x))2
     return (1 - erf(np.log(1 + np.exp(x))))**2
@@ -108,6 +111,7 @@ def fit_and_plot_activation(function_name):
         'ReGLU': ReGLU,
         'Swish': Swish,
         'SwishGLU': SwishGLU,
+        'sin': sin,
         'erfc_Softplus_2': erfc_Softplus_2
     }
     
@@ -122,7 +126,9 @@ def fit_and_plot_activation(function_name):
     y_data = activation_func(x_data)
 
     # Initial parameter guesses
-    initial_guesses = [0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+    initial_guesses = [-4.41576808e+01 , 2.81414579e+04 , 1.42970453e+04 ,-1.98068326e+04,
+ -2.73484568e+03 ,2.64281693e+03,  1.72808118e+05 ,-9.64022283e+04,
+ -1.32828660e+04,  1.00431456e+04]
 
     # Fit the complex function to the activation function data
     try:
@@ -139,13 +145,14 @@ def fit_and_plot_activation(function_name):
     plot_results_with_mse(x_data, y_data, y_fitted, function_name)
     
 # Example usage
-fit_and_plot_activation('ReLU')
-fit_and_plot_activation('GELU')
-# fit_and_plot_activation('SiLU')
-fit_and_plot_activation('Swish')
-# fit_and_plot_activation('Mish')
-fit_and_plot_activation('GEGLU')
-fit_and_plot_activation('ReGLU')
-fit_and_plot_activation('SwishGLU')
-fit_and_plot_activation('erfc_Softplus_2')
+# fit_and_plot_activation('ReLU')
+# fit_and_plot_activation('GELU')
+# # fit_and_plot_activation('SiLU')
+# fit_and_plot_activation('Swish')
+# # fit_and_plot_activation('Mish')
+# fit_and_plot_activation('GEGLU')
+# fit_and_plot_activation('ReGLU')
+# fit_and_plot_activation('SwishGLU')
+# fit_and_plot_activation('erfc_Softplus_2')
+fit_and_plot_activation('sin')
 
