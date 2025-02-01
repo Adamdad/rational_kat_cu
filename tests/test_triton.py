@@ -1,5 +1,5 @@
 import torch
-from src_triton.rational_triton import rational_fwd as triton_rational_fwd
+from src_triton.rational_triton import rational_fwd_triton
 
 def _get_xps(z, len_numerator, len_denominator):
     """
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     weight_denominator = torch.randn(group, len_deno, device=device)
 
     # Compute outputs.
-    y_triton = triton_rational_fwd(x, weight_numerator, weight_denominator, group)
+    y_triton = rational_fwd_triton(x, weight_numerator, weight_denominator, group)
     y_torch  = Rational_CUDA_A_1DGroup(x, weight_numerator, weight_denominator, group)
 
     # Compute maximum absolute difference.
