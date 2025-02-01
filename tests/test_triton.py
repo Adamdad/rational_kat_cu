@@ -93,8 +93,10 @@ if __name__ == "__main__":
 
     # Create random input and coefficients.
     x = torch.randn(B, L, D, device=device)
-    weight_numerator = torch.randn(group, len_num, device=device)
-    weight_denominator = torch.randn(group, len_deno, device=device)
+    weight_numerator = torch.randn(1, len_num, device=device)
+    weight_numerator = weight_numerator.repeat(group, 1)
+    weight_denominator = torch.randn(1, len_deno, device=device)
+    weight_denominator = weight_denominator.repeat(group, 1)
 
     # Compute outputs.
     y_triton = rational_fwd_triton(x, weight_numerator, weight_denominator, group)
