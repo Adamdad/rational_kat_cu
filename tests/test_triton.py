@@ -57,6 +57,37 @@ def Rational_CUDA_A_F(x, weight_numerator, weight_denominator):
 
     return numerator.div(denominator).view(x.shape)  # Reshape result to match input shape
 
+def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
+    """
+    Applies Rational_CUDA_A_F group-wise to an input tensor of shape (B, L, D).
+    
+    Args:
+    - B, L, D (int): Dimensions of the input tensor.
+    - group (int): Number of groups.
+    - x (torch.Tensor): Input tensor of shape (B, L, D).
+    - weights_numerator (list of torch.Tensor): List of tensors, each containing numerator coefficients for a group.
+    - weights_denominator (list of torch.Tensor): List of tensors, each containing denominator coefficients for a group.
+    
+    Returns:
+    - torch.Tensor: The result tensor of shape (B, L, D).
+    """
+    
+    D_per_group = D // group
+    results = []
+
+    for g in range(group):
+        # Slice the input tensor for the current group
+        start_idx = g * D_per_group
+        end_idx = start_idx + D_per_group
+        x_group = x[:, :, start_idx:end_idx]
+        x_group = x_group.contiguous()
+
+        # Compute the rational function for the current group
+        result_group = Rational_CUDA_A_F(x_group, weights_numerator[g], weights_denominator[g])
+        results.append(result_group)
+
+    # Concatenate the results along the depth dimension
+    return torch.cat(results, dim=2)
 
 # ======================================
 # Testing both implementations for equality
@@ -76,14 +107,14 @@ if __name__ == "__main__":
 
     # Create random input and coefficients.
     x = torch.randn(B, L, D, device=device)
-    weight_numerator = torch.randn(len_num, device=device)
-    weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
-    weight_denominator = torch.randn(len_deno, device=device)
-    weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
+    weight_numerator = torch.randn(group, len_num, device=device)
+    # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
+    weight_denominator = torch.randn(group, len_deno, device=device)
+    # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
 
     # Compute outputs.
-    y_triton = rational_fwd_triton(x, weight_numerator_g, weight_denominator_g, group)
-    y_torch  = Rational_CUDA_A_F(x, weight_numerator, weight_denominator)
+    y_triton = rational_fwd_triton(x, weight_numerator, weight_denominator, group)
+    y_torch  = process_groups(B, L, D, group, x, weight_numerator, weight_denominator)
 
     # Compute maximum absolute difference.
     diff = (y_triton - y_torch).abs().max().item()
