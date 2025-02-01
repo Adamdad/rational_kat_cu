@@ -19,8 +19,9 @@ def rational_fwd_kernel(
     a_idx = g_index * 6
     b_idx = g_index * 4
 
-    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 6), mask=tl.arange(0, 6) < 6)
-    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)
+    # Load coefficients with padding to the nearest power of 2
+    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 8), mask=tl.arange(0, 8) < 6)  # Pad to 8 (nearest power of 2)
+    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)  # Already a power of 2
     s_b = tl.abs(s_b)
 
     xp1 = x
@@ -75,19 +76,20 @@ def rational_bwd_kernel(
     a_idx = g_index * 6
     b_idx = g_index * 4
 
-    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 6), mask=tl.arange(0, 6) < 6)
-    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)
+    # Load coefficients with padding to the nearest power of 2
+    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 8), mask=tl.arange(0, 8) < 6)  # Pad to 8 (nearest power of 2)
+    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)  # Already a power of 2
     s_b_abs = tl.abs(s_b)
 
     xp = x
     axp = tl.abs(xp)
 
-    xp_powers = tl.zeros((5,), dtype=tl.float32)
+    xp_powers = tl.zeros((8,), dtype=tl.float32)  # Pad to 8 (nearest power of 2)
     xp_powers = tl.set(xp_powers, 0, xp)
     for i in range(1, 5):
         xp_powers = tl.set(xp_powers, i, xp_powers[i-1] * xp)
 
-    axp_powers = tl.zeros((4,), dtype=tl.float32)
+    axp_powers = tl.zeros((4,), dtype=tl.float32)  # Already a power of 2
     axp_powers = tl.set(axp_powers, 0, axp)
     for i in range(1, 4):
         axp_powers = tl.set(axp_powers, i, axp_powers[i-1] * axp)
@@ -102,8 +104,8 @@ def rational_bwd_kernel(
     d_i_x = (R / Q + S * mpq2) * grad_o
     tl.store(d_x_ptr + idx, d_i_x, mask=mask)
 
-    local_da = tl.zeros((6,), dtype=tl.float32)
-    local_db = tl.zeros((4,), dtype=tl.float32)
+    local_da = tl.zeros((8,), dtype=tl.float32)  # Pad to 8 (nearest power of 2)
+    local_db = tl.zeros((4,), dtype=tl.float32)  # Already a power of 2
 
     local_da = tl.set(local_da, 0, 1.0 / Q * grad_o)
     for i in range(1, 6):
@@ -112,11 +114,11 @@ def rational_bwd_kernel(
     for i in range(0, 4):
         local_db = tl.set(local_db, i, mpq2 * tl.sign(s_b[i]) * axp_powers[i] * grad_o)
 
-    for i in range(0, 6):
+    for i in range(0, 6):  # Only write valid elements
         tl.atomic_add(d_a_ptr + a_idx + i, local_da[i])
-    for i in range(0, 4):
+    for i in range(0, 4):  # Only write valid elements
         tl.atomic_add(d_b_ptr + b_idx + i, local_db[i])
-
+        
 def rational_bwd_triton(grad_output, x, n, d, group):
     B, L, D = x.shape
     x_size = x.numel()
