@@ -19,22 +19,27 @@ def rational_fwd_kernel(
     a_idx = g_index * 6
     b_idx = g_index * 4
 
-    # Load coefficients with padding to the nearest power of 2
-    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 8), mask=tl.arange(0, 8) < 6)  # Pad to 8 (nearest power of 2)
-    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)  # Already a power of 2
-    s_b = tl.abs(s_b)
+    # Load coefficients for a (6 elements)
+    s_a = tl.zeros((6,), dtype=tl.float32)
+    for i in tl.static_range(6):  # Use static_range for compile-time loop
+        s_a = tl.set(s_a, i, tl.load(a_ptr + a_idx + i))
+
+    # Load coefficients for b (4 elements)
+    s_b = tl.zeros((4,), dtype=tl.float32)
+    for i in tl.static_range(4):  # Use static_range for compile-time loop
+        s_b = tl.set(s_b, i, tl.abs(tl.load(b_ptr + b_idx + i)))
 
     xp1 = x
     abs_xp1 = tl.abs(xp1)
 
     # Compute P using Horner's method
     P = s_a[5]
-    for i in range(4, -1, -1):
+    for i in tl.static_range(4, -1, -1):  # Use static_range for compile-time loop
         P = P * xp1 + s_a[i]
 
     # Compute Q using Horner's method
     Q = s_b[3]
-    for i in range(2, -1, -1):
+    for i in tl.static_range(2, -1, -1):  # Use static_range for compile-time loop
         Q = Q * abs_xp1 + s_b[i]
     Q = Q * abs_xp1 + 1.0
 
@@ -76,24 +81,33 @@ def rational_bwd_kernel(
     a_idx = g_index * 6
     b_idx = g_index * 4
 
-    # Load coefficients with padding to the nearest power of 2
-    s_a = tl.load(a_ptr + a_idx + tl.arange(0, 8), mask=tl.arange(0, 8) < 6)  # Pad to 8 (nearest power of 2)
-    s_b = tl.load(b_ptr + b_idx + tl.arange(0, 4), mask=tl.arange(0, 4) < 4)  # Already a power of 2
+    # Load coefficients for a (6 elements)
+    s_a = tl.zeros((6,), dtype=tl.float32)
+    for i in tl.static_range(6):  # Use static_range for compile-time loop
+        s_a = tl.set(s_a, i, tl.load(a_ptr + a_idx + i))
+
+    # Load coefficients for b (4 elements)
+    s_b = tl.zeros((4,), dtype=tl.float32)
+    for i in tl.static_range(4):  # Use static_range for compile-time loop
+        s_b = tl.set(s_b, i, tl.load(b_ptr + b_idx + i))
     s_b_abs = tl.abs(s_b)
 
     xp = x
     axp = tl.abs(xp)
 
-    xp_powers = tl.zeros((8,), dtype=tl.float32)  # Pad to 8 (nearest power of 2)
+    # Compute powers of xp
+    xp_powers = tl.zeros((5,), dtype=tl.float32)
     xp_powers = tl.set(xp_powers, 0, xp)
-    for i in range(1, 5):
+    for i in tl.static_range(1, 5):  # Use static_range for compile-time loop
         xp_powers = tl.set(xp_powers, i, xp_powers[i-1] * xp)
 
-    axp_powers = tl.zeros((4,), dtype=tl.float32)  # Already a power of 2
+    # Compute powers of axp
+    axp_powers = tl.zeros((4,), dtype=tl.float32)
     axp_powers = tl.set(axp_powers, 0, axp)
-    for i in range(1, 4):
+    for i in tl.static_range(1, 4):  # Use static_range for compile-time loop
         axp_powers = tl.set(axp_powers, i, axp_powers[i-1] * axp)
 
+    # Compute P, Q, R, S
     P = s_a[0] + s_a[1] * xp_powers[0] + s_a[2] * xp_powers[1] + s_a[3] * xp_powers[2] + s_a[4] * xp_powers[3] + s_a[5] * xp_powers[4]
     Q = 1.0 + s_b_abs[0] * axp_powers[0] + s_b_abs[1] * axp_powers[1] + s_b_abs[2] * axp_powers[2] + s_b_abs[3] * axp_powers[3]
     R = s_a[1] + 2.0 * s_a[2] * xp_powers[0] + 3.0 * s_a[3] * xp_powers[1] + 4.0 * s_a[4] * xp_powers[2] + 5.0 * s_a[5] * xp_powers[3]
@@ -104,19 +118,21 @@ def rational_bwd_kernel(
     d_i_x = (R / Q + S * mpq2) * grad_o
     tl.store(d_x_ptr + idx, d_i_x, mask=mask)
 
-    local_da = tl.zeros((8,), dtype=tl.float32)  # Pad to 8 (nearest power of 2)
-    local_db = tl.zeros((4,), dtype=tl.float32)  # Already a power of 2
+    # Compute gradients for a and b
+    local_da = tl.zeros((6,), dtype=tl.float32)
+    local_db = tl.zeros((4,), dtype=tl.float32)
 
     local_da = tl.set(local_da, 0, 1.0 / Q * grad_o)
-    for i in range(1, 6):
+    for i in tl.static_range(1, 6):  # Use static_range for compile-time loop
         local_da = tl.set(local_da, i, xp_powers[i-1] / Q * grad_o)
 
-    for i in range(0, 4):
+    for i in tl.static_range(0, 4):  # Use static_range for compile-time loop
         local_db = tl.set(local_db, i, mpq2 * tl.sign(s_b[i]) * axp_powers[i] * grad_o)
 
-    for i in range(0, 6):  # Only write valid elements
+    # Accumulate gradients for a and b
+    for i in tl.static_range(0, 6):  # Use static_range for compile-time loop
         tl.atomic_add(d_a_ptr + a_idx + i, local_da[i])
-    for i in range(0, 4):  # Only write valid elements
+    for i in tl.static_range(0, 4):  # Use static_range for compile-time loop
         tl.atomic_add(d_b_ptr + b_idx + i, local_db[i])
         
 def rational_bwd_triton(grad_output, x, n, d, group):
