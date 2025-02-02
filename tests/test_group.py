@@ -285,6 +285,44 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     used_time /= 100
     print("Time taken by kat_rational.My_rational_1dgroup bwd:", used_time, "Peak memory:", peak_mem)
 
+def benchmark_with_memory(func, *args, n_iter=100, warmup=10, device=torch.device("cuda")):
+    """
+    Benchmark a function running on the GPU using CUDA events and report memory usage.
+
+    Returns:
+      - avg_time_ms: average execution time in milliseconds.
+      - memory_used: maximum memory used (in MB) during the benchmark.
+    """
+    # Warm-up
+    for _ in range(warmup):
+        func(*args)
+    
+    torch.cuda.synchronize(device)
+
+    # Reset the max memory counter.
+    torch.cuda.reset_peak_memory_stats(device)
+
+    start_event = torch.cuda.Event(enable_timing=True)
+    end_event = torch.cuda.Event(enable_timing=True)
+
+    start_event.record()
+    for _ in range(n_iter):
+        func(*args)
+    end_event.record()
+
+    torch.cuda.synchronize(device)
+
+    elapsed_time_ms = start_event.elapsed_time(end_event)
+    avg_time_ms = elapsed_time_ms / n_iter
+
+    # Get the peak memory usage in MB.
+    max_memory_bytes = torch.cuda.max_memory_allocated(device)
+    memory_used = max_memory_bytes / (1024 ** 2)
+    
+    throughput = n_iter / (elapsed_time_ms / 1000)
+
+    return avg_time_ms, memory_used, throughput
+
 def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     import time
     """
@@ -308,60 +346,26 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     results = {}
 
     # Method 1: Loop-based processing groups
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = process_groups(B, L, D, group_size, x, numerator_weights, denominator_weights)
-        torch.cuda.synchronize()  # Ensure CUDA kernel completion
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(process_groups, B, L, D, group_size, x, numerator_weights, denominator_weights)
+
     print(f"Throughput for loop forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['loop_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
 
-    # Method 2: Rational_CUDA_A_1DGroup (vectorized CUDA)
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = Rational_CUDA_A_1DGroup(x, numerator_weights, denominator_weights, group_size)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(Rational_CUDA_A_1DGroup, x, numerator_weights, denominator_weights, group_size=group_size)
     print(f"Throughput for torch vectorized forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['vectorized_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
 
-    # Method 3: rational_1dgroup.apply (CUDA autograd custom function)
-    torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = RationalTriton1DGroup.apply(x, numerator_weights, denominator_weights, group_size)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
+    # Method 2: kat_rational.My_rational_1dgroup
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(RationalTriton1DGroup.apply, x, numerator_weights, denominator_weights, group_size)
     print(f"Throughput for cuda forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['cuda_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 4: GELU activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.gelu(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
+    
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.gelu, x, numerator_weights, denominator_weights, group_size)
     print(f"Throughput for GELU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['gelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    # Method 5: ReLU activation function
-    start_time = time.time()
-    for _ in range(num_batches):
-        result = torch.nn.functional.relu(x)
-        torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
-    throughput = num_batches / total_time
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.relu, x, numerator_weights, denominator_weights, group_size)
     print(f"Throughput for ReLU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['relu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
