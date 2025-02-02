@@ -1,6 +1,6 @@
 import torch
 from kat_rational import RationalTriton1DGroup
-from rational.torch import Rational
+# from rational.torch import Rational
 from torch import nn
 
 def _get_xps(z, len_numerator, len_denominator):
