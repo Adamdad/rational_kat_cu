@@ -1,5 +1,5 @@
 import torch
-from kat_rational import rational_1dgroup
+from kat_rational import RationalTriton1DGroup
 from rational.torch import Rational
 from torch import nn
 
@@ -335,7 +335,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     torch.cuda.reset_peak_memory_stats()  # Reset peak memory statistics
     start_time = time.time()
     for _ in range(num_batches):
-        result = rational_1dgroup.apply(x, numerator_weights, denominator_weights, group_size)
+        result = RationalTriton1DGroup.apply(x, numerator_weights, denominator_weights, group_size)
         torch.cuda.synchronize()
     total_time = time.time() - start_time
     peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)  # Convert to MB
