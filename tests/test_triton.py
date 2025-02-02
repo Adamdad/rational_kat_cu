@@ -115,6 +115,8 @@ if __name__ == "__main__":
     # Compute outputs.
     y_triton = rational_fwd_triton(x, weight_numerator, weight_denominator, group)
     y_torch  = process_groups(B, L, D, group, x, weight_numerator, weight_denominator)
+    
+    print(y_torch.dtype, y_triton.dtype)
 
     # Compute maximum absolute difference.
     diff = (y_triton - y_torch).abs().max().item()
