@@ -239,7 +239,6 @@ def rational_bwd_triton(grad_output, x, n, d, group):
     return d_x, d_n, d_d
 
 
-
 class RationalTriton1DGroup(torch.autograd.Function):
     @staticmethod
     @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
