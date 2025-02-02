@@ -224,7 +224,7 @@ def rational_bwd_kernel(
     tl.atomic_add(shared_db + (sm_offset_b + 3), db3, mask=mask)
 
     # Ensure all threads in the block have finished updating shared memory.
-    tl.barrier()
+    tl.sync()
 
     # Have only one thread per block write the accumulated shared memory to global memory.
     if tl.program_id(axis=0) % BLOCK_SIZE == 0:
