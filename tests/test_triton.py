@@ -152,31 +152,29 @@ def test_time():
     weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
     # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
     # Benchmark each implementation.
-    triton_time = benchmark(rational_fwd_triton, x, weight_numerator, weight_denominator, group)
-    torch_time = benchmark(process_groups, B, L, D, group, x, weight_numerator, weight_denominator)
+    triton_time, triton_mem = benchmark_with_memory(rational_fwd_triton, x, weight_numerator, weight_denominator, group)
+    torch_time, torch_mem = benchmark_with_memory(process_groups, B, L, D, group, x, weight_numerator, weight_denominator)
 
     print("\nAverage execution time over iterations:")
-    print(f"  Triton function: {triton_time:.3f} ms per iteration")
-    print(f"  Torch function: {torch_time:.3f} ms per iteration")
+    print(f"  Triton function: {triton_time:.3f} ms per iteration, {triton_mem:.3f} MB")
+    print(f"  Torch function: {torch_time:.3f} ms per iteration, {torch_mem:.3f} MB")
     
-def benchmark(func, *args, n_iter=100, warmup=10):
+def benchmark_with_memory(func, *args, n_iter=100, warmup=10, device=torch.device("cuda")):
     """
-    Benchmark a function running on the GPU using CUDA events.
+    Benchmark a function running on the GPU using CUDA events and report memory usage.
 
-    Parameters:
-      - func: function to benchmark.
-      - args: arguments to the function.
-      - n_iter: number of iterations for timing.
-      - warmup: number of warm-up iterations.
     Returns:
-      - average execution time in milliseconds.
+      - avg_time_ms: average execution time in milliseconds.
+      - memory_used: maximum memory used (in MB) during the benchmark.
     """
     # Warm-up
     for _ in range(warmup):
         func(*args)
     
-    # Synchronize to ensure warm-up is complete.
-    torch.cuda.synchronize()
+    torch.cuda.synchronize(device)
+
+    # Reset the max memory counter.
+    torch.cuda.reset_peak_memory_stats(device)
 
     start_event = torch.cuda.Event(enable_timing=True)
     end_event = torch.cuda.Event(enable_timing=True)
@@ -186,12 +184,17 @@ def benchmark(func, *args, n_iter=100, warmup=10):
         func(*args)
     end_event.record()
 
-    # Wait for the events to be recorded
-    torch.cuda.synchronize()
+    torch.cuda.synchronize(device)
 
     elapsed_time_ms = start_event.elapsed_time(end_event)
     avg_time_ms = elapsed_time_ms / n_iter
-    return avg_time_ms
+
+    # Get the peak memory usage in MB.
+    max_memory_bytes = torch.cuda.max_memory_allocated(device)
+    memory_used = max_memory_bytes / (1024 ** 2)
+
+    return avg_time_ms, memory_used
+
 # ======================================
 # Testing both implementations for equality
 # ======================================
