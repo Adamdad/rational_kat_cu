@@ -89,10 +89,7 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
     # Concatenate the results along the depth dimension
     return torch.cat(results, dim=2)
 
-# ======================================
-# Testing both implementations for equality
-# ======================================
-if __name__ == "__main__":
+def test():
     torch.manual_seed(0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.float16
@@ -133,3 +130,70 @@ if __name__ == "__main__":
     print(y_triton)
     print("\nTorch output:")
     print(y_torch)
+    
+    
+def test_time():
+    torch.manual_seed(0)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dtype = torch.float16
+    # Define dimensions and groups.
+    B, L, D = 2, 4, 8  # Example: batch=2, length=4, features=8
+    group = 4        # Make sure D is divisible by group
+    assert D % group == 0, "D must be divisible by group"
+
+    # Coefficient shapes.
+    len_num = 6     # numerator coefficients (degree 5)
+    len_deno = 4    # denominator coefficients (degree 3, plus constant)
+
+    # Create random input and coefficients.
+    x = torch.randn(B, L, D, device=device, dtype=dtype)
+    weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
+    # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
+    weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
+    # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
+    # Benchmark each implementation.
+    triton_time = benchmark(rational_fwd_triton, x, weight_numerator, weight_denominator, group)
+    torch_time = benchmark(process_groups, B, L, D, group, x, weight_numerator, weight_denominator)
+
+    print("\nAverage execution time over iterations:")
+    print(f"  Triton function: {triton_time:.3f} ms per iteration")
+    print(f"  Torch function: {torch_time:.3f} ms per iteration")
+def benchmark(func, *args, n_iter=100, warmup=10):
+    """
+    Benchmark a function running on the GPU using CUDA events.
+
+    Parameters:
+      - func: function to benchmark.
+      - args: arguments to the function.
+      - n_iter: number of iterations for timing.
+      - warmup: number of warm-up iterations.
+    Returns:
+      - average execution time in milliseconds.
+    """
+    # Warm-up
+    for _ in range(warmup):
+        func(*args)
+    
+    # Synchronize to ensure warm-up is complete.
+    torch.cuda.synchronize()
+
+    start_event = torch.cuda.Event(enable_timing=True)
+    end_event = torch.cuda.Event(enable_timing=True)
+
+    start_event.record()
+    for _ in range(n_iter):
+        func(*args)
+    end_event.record()
+
+    # Wait for the events to be recorded
+    torch.cuda.synchronize()
+
+    elapsed_time_ms = start_event.elapsed_time(end_event)
+    avg_time_ms = elapsed_time_ms / n_iter
+    return avg_time_ms
+# ======================================
+# Testing both implementations for equality
+# ======================================
+if __name__ == "__main__":
+    
+    test_time()
