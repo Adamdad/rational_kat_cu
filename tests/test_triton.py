@@ -1,5 +1,5 @@
 import torch
-from src_triton.rational_triton import rational_triton_1dgroup, rational_fwd_triton
+from src_triton.rational_triton import RationalTriton1DGroup, rational_fwd_triton
 import torch.nn as nn
 
 def _get_xps(z, len_numerator, len_denominator):
@@ -232,7 +232,7 @@ def test_backward():
     weight_numerator.grad.zero_()
     weight_denominator.grad.zero_()
     
-    my_output = rational_triton_1dgroup.apply(x, weight_numerator, weight_denominator, group)
+    my_output = RationalTriton1DGroup.apply(x, weight_numerator, weight_denominator, group)
     loss = loss_fn(expected_output, my_output)
     loss.backward()
     my_grad_n = weight_numerator.grad.clone()

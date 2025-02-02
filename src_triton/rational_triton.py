@@ -1,6 +1,7 @@
 import torch
 import triton
 import triton.language as tl
+from torch import Tensor
 
 # --------------------
 # Forward kernel
@@ -238,42 +239,61 @@ def rational_bwd_triton(grad_output, x, n, d, group):
     return d_x, d_n, d_d
 
 
-class rational_triton_1dgroup(torch.autograd.Function):
+
+class RationalTriton1DGroup(torch.autograd.Function):
     @staticmethod
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
-    def forward(ctx, input, weight_numerator, weight_denominator, group):
+    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32, device_type="cuda")
+    def forward(ctx: torch.autograd.Function, 
+                input: Tensor, 
+                weight_numerator: Tensor, 
+                weight_denominator: Tensor, 
+                group: int) -> Tensor:
         """
-        Forward pass of the custom autograd function.
+        Forward pass of the rational function computed with Triton kernels.
         
         Args:
-            ctx: Context object used to stash information for backward computation.
+            ctx: The context object for storing information for the backward pass.
             input (Tensor): Input tensor.
-            weight_numerator (Tensor): Weights of the numerator polynomial.
-            weight_denominator (Tensor): Weights of the denominator polynomial.
-            group (int): The group number.
-
+            weight_numerator (Tensor): Weights for the numerator polynomial.
+            weight_denominator (Tensor): Weights for the denominator polynomial.
+            group (int): The group number (non-differentiable).
+        
         Returns:
-            Tensor: The result of the rational function applied to the input tensor.
+            Tensor: Output tensor resulting from applying the rational function.
         """
+        # Save tensors required for backward pass.
         ctx.save_for_backward(input, weight_numerator, weight_denominator)
         ctx.group = group
-        x = rational_fwd_triton(input, weight_numerator, weight_denominator, group)
-        return x
+
+        # Compute the forward pass using a Triton kernel.
+        output = rational_fwd_triton(input, weight_numerator, weight_denominator, group)
+        return output
 
     @staticmethod
-    @torch.cuda.amp.custom_bwd
-    def backward(ctx, grad_output):
+    @torch.cuda.amp.custom_bwd(device_type="cuda")
+    def backward(ctx: torch.autograd.Function, grad_output: Tensor):
         """
-        Backward pass of the custom autograd function.
+        Backward pass of the rational function computed with Triton kernels.
         
         Args:
-            ctx: Context object from the forward pass.
-            grad_output (Tensor): Gradient of the output tensor.
-
+            ctx: The context object with saved tensors.
+            grad_output (Tensor): Gradient of the loss with respect to the output.
+        
         Returns:
-            tuple: Gradients of the input, weight_numerator, weight_denominator.
+            Tuple[Tensor, Tensor, Tensor, None]:
+                - Gradient with respect to the input.
+                - Gradient with respect to weight_numerator.
+                - Gradient with respect to weight_denominator.
+                - None for the non-differentiable 'group' parameter.
         """
+        # Retrieve saved tensors and the group number.
         input, weight_numerator, weight_denominator = ctx.saved_tensors
         group = ctx.group
-        d_input, d_weight_numerator, d_weight_denominator = rational_bwd_triton(grad_output, input, weight_numerator, weight_denominator, group)
+
+        # Compute gradients using a Triton backward kernel.
+        d_input, d_weight_numerator, d_weight_denominator = rational_bwd_triton(
+            grad_output, input, weight_numerator, weight_denominator, group
+        )
+
+        # Return gradients. None is returned for 'group' as it is non-differentiable.
         return d_input, d_weight_numerator, d_weight_denominator, None
