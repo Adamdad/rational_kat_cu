@@ -137,7 +137,7 @@ def test_time():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.float32
     # Define dimensions and groups.
-    B, L, D = 2, 100, 256  # Example: batch=2, length=4, features=8
+    B, L, D = 100, 100, 256  # Example: batch=2, length=4, features=8
     group = 4        # Make sure D is divisible by group
     assert D % group == 0, "D must be divisible by group"
 
@@ -158,6 +158,7 @@ def test_time():
     print("\nAverage execution time over iterations:")
     print(f"  Triton function: {triton_time:.3f} ms per iteration")
     print(f"  Torch function: {torch_time:.3f} ms per iteration")
+    
 def benchmark(func, *args, n_iter=100, warmup=10):
     """
     Benchmark a function running on the GPU using CUDA events.
