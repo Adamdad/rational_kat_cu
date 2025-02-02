@@ -2,6 +2,9 @@
 
 This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT). It support the training and inference of https://github.com/Adamdad/kat.
 
+# News
+- [x] 2025.2.1 The `triton` version of GR-KAT has been implemented. Installing and running KAT is now much easier!
+
 # Installation 
 To install the extension, follow these steps:
 ```shell
