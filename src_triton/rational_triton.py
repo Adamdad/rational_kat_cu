@@ -200,13 +200,19 @@ def rational_bwd_kernel(
     db2 = mpq2 * sign_b2 * axp3 * grad_o
     db3 = mpq2 * sign_b3 * axp4 * grad_o
 
-    # Accumulate contributions for coefficients.
-    # (Each thread’s computed gradients are atomically added to global memory.)
-    # For each lane in the block, we perform an atomic add.
-    for i, da in enumerate([da0, da1, da2, da3, da4, da5]):
-        tl.atomic_add(d_a_ptr + (a_offset + i), da, mask=mask)
-    for i, db in enumerate([db0, db1, db2, db3]):
-        tl.atomic_add(d_b_ptr + (b_offset + i), db, mask=mask)
+    # Accumulate contributions for coefficients for a.
+    tl.atomic_add(d_a_ptr + (a_offset + 0), da0, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 1), da1, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 2), da2, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 3), da3, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 4), da4, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 5), da5, mask=mask)
+
+    # Accumulate contributions for coefficients for b.
+    tl.atomic_add(d_b_ptr + (b_offset + 0), db0, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 1), db1, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 2), db2, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 3), db3, mask=mask)
         
 def rational_bwd_triton(grad_output, x, n, d, group):
     B, L, D = x.shape
