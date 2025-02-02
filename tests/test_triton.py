@@ -95,7 +95,7 @@ def process_groups(B, L, D, group, x, weights_numerator, weights_denominator):
 if __name__ == "__main__":
     torch.manual_seed(0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+    dtype = torch.float16
     # Define dimensions and groups.
     B, L, D = 2, 4, 8  # Example: batch=2, length=4, features=8
     group = 4        # Make sure D is divisible by group
@@ -106,10 +106,10 @@ if __name__ == "__main__":
     len_deno = 4    # denominator coefficients (degree 3, plus constant)
 
     # Create random input and coefficients.
-    x = torch.randn(B, L, D, device=device)
-    weight_numerator = torch.randn(group, len_num, device=device)
+    x = torch.randn(B, L, D, device=device, dtype=dtype)
+    weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
     # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
-    weight_denominator = torch.randn(group, len_deno, device=device)
+    weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
     # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
 
     # Compute outputs.
