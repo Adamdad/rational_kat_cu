@@ -52,7 +52,7 @@ def rational_fwd_kernel(
     Q = tl.fma(Q, abs_x, s_b2)
     Q = tl.fma(Q, abs_x, s_b1)
     Q = tl.fma(Q, abs_x, s_b0)
-    Q = tl.fma(Q, abs_x, tl.float16(1.0))
+    Q = tl.fma(Q, abs_x, 1.0)
 
     tl.store(result_ptr + offs, P / Q, mask=mask)
 
