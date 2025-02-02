@@ -351,7 +351,7 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     print(f"Throughput for loop forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['loop_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
 
-    avg_time_ms, peak_mem, throughput = benchmark_with_memory(Rational_CUDA_A_1DGroup, x, numerator_weights, denominator_weights, group_size=group_size)
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(Rational_CUDA_A_1DGroup, x, numerator_weights, denominator_weights, group_size)
     print(f"Throughput for torch vectorized forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['vectorized_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
 
