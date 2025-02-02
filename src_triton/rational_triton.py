@@ -122,26 +122,18 @@ def rational_bwd_kernel(
     B, L, D, group, x_size, n_size, d_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
-    # Each thread's global index.
-    pid = tl.program_id(0)
+    pid = tl.program_id(axis=0)
     offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = offs < x_size
 
-    # Allocate shared memory for accumulating coefficient gradients.
-    # For numerator: group * 6 coefficients.
-    # For denominator: group * 4 coefficients.
-    # (Assuming group is small; otherwise, adjust the allocation.)
-    shared_da = tl.zeros((32 * 6,), dtype=tl.float32)  # 32 is a safe upper bound for group.
-    shared_db = tl.zeros((32 * 4,), dtype=tl.float32)
-
-    # Compute each thread's local gradients.
+    # Load grad_output and x.
     grad_o = tl.load(grad_output_ptr + offs, mask=mask)
     x_val = tl.load(x_ptr + offs, mask=mask)
 
-    # Determine group index: each element belongs to group = (d_index // D_per_group)
+    # Determine group index
     d_index = offs % D
     g_index = d_index // D_per_group
-    a_offset = g_index * 6  # Offset into the coefficients arrays.
+    a_offset = g_index * 6
     b_offset = g_index * 4
 
     # Load coefficients for a.
@@ -152,7 +144,7 @@ def rational_bwd_kernel(
     a4 = tl.load(a_ptr + a_offset + 4)
     a5 = tl.load(a_ptr + a_offset + 5)
 
-    # Load coefficients for b and compute their absolute values.
+    # Load coefficients for b (and compute their absolute values).
     b0 = tl.load(b_ptr + b_offset + 0)
     b1 = tl.load(b_ptr + b_offset + 1)
     b2 = tl.load(b_ptr + b_offset + 2)
@@ -178,25 +170,27 @@ def rational_bwd_kernel(
     # Compute P, Q, R, S.
     P = a0 + a1 * xp + a2 * xp2 + a3 * xp3 + a4 * xp4 + a5 * xp5
     Q = 1.0 + b0_abs * axp + b1_abs * axp2 + b2_abs * axp3 + b3_abs * axp4
-    R = a1 + 2.0 * a2 * xp + 3.0 * a3 * xp2 + 4.0 * a4 * xp3 + 5.0 * a5 * xp4
-
+    R = a1 + 2.0*a2 * xp + 3.0*a3 * xp2 + 4.0*a4 * xp3 + 5.0*a5 * xp4
+    # Compute sign(x): if x<0 then -1, else 1.
     sign_x = tl.where(x_val < 0, -1.0, 1.0)
-    S = sign_x * (b0_abs + 2.0 * b1_abs * axp + 3.0 * b2_abs * axp2 + 4.0 * b3_abs * axp3)
+    S = sign_x * (b0_abs + 2.0*b1_abs * axp + 3.0*b2_abs * axp2 + 4.0*b3_abs * axp3)
+
     mpq2 = -P / (Q * Q)
 
     # Compute gradient for x.
     dx = (R / Q + S * mpq2) * grad_o
     tl.store(d_x_ptr + offs, dx, mask=mask)
 
-    # Compute gradients for coefficients.
-    # For numerator:
+    # Compute gradients for a.
     da0 = grad_o / Q
     da1 = xp * grad_o / Q
     da2 = xp2 * grad_o / Q
     da3 = xp3 * grad_o / Q
     da4 = xp4 * grad_o / Q
     da5 = xp5 * grad_o / Q
-    # For denominator (using original sign for b).
+
+    # Compute gradients for b.
+    # Note: for each coefficient b_i, we use the original sign.
     sign_b0 = tl.where(b0 < 0, -1.0, 1.0)
     sign_b1 = tl.where(b1 < 0, -1.0, 1.0)
     sign_b2 = tl.where(b2 < 0, -1.0, 1.0)
@@ -206,38 +200,19 @@ def rational_bwd_kernel(
     db2 = mpq2 * sign_b2 * axp3 * grad_o
     db3 = mpq2 * sign_b3 * axp4 * grad_o
 
-    # --- Accumulate into shared memory ---
-    # Each thread atomically adds its local gradients into the per-block shared memory.
-    # Note: We use an offset into the shared arrays based on the group index.
-    sm_offset_a = g_index * 6
-    tl.atomic_add(shared_da + (sm_offset_a + 0), da0, mask=mask)
-    tl.atomic_add(shared_da + (sm_offset_a + 1), da1, mask=mask)
-    tl.atomic_add(shared_da + (sm_offset_a + 2), da2, mask=mask)
-    tl.atomic_add(shared_da + (sm_offset_a + 3), da3, mask=mask)
-    tl.atomic_add(shared_da + (sm_offset_a + 4), da4, mask=mask)
-    tl.atomic_add(shared_da + (sm_offset_a + 5), da5, mask=mask)
+    # Accumulate contributions for coefficients for a.
+    tl.atomic_add(d_a_ptr + (a_offset + 0), da0, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 1), da1, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 2), da2, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 3), da3, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 4), da4, mask=mask)
+    tl.atomic_add(d_a_ptr + (a_offset + 5), da5, mask=mask)
 
-    sm_offset_b = g_index * 4
-    tl.atomic_add(shared_db + (sm_offset_b + 0), db0, mask=mask)
-    tl.atomic_add(shared_db + (sm_offset_b + 1), db1, mask=mask)
-    tl.atomic_add(shared_db + (sm_offset_b + 2), db2, mask=mask)
-    tl.atomic_add(shared_db + (sm_offset_b + 3), db3, mask=mask)
-
-    # Ensure all threads in the block have finished updating shared memory.
-    tl.sync()
-
-    # Have only one thread per block write the accumulated shared memory to global memory.
-    if tl.program_id(axis=0) % BLOCK_SIZE == 0:
-        # For each possible group in this block, write the shared accumulations.
-        # (Here we assume that the number of groups is small, so we iterate over all groups.)
-        for g in range(group):
-            for i in range(6):
-                val = tl.load(shared_da + (g * 6 + i))
-                # Use atomic add to accumulate block results into global memory.
-                tl.atomic_add(d_a_ptr + (g * 6 + i), val)
-            for i in range(4):
-                val = tl.load(shared_db + (g * 4 + i))
-                tl.atomic_add(d_b_ptr + (g * 4 + i), val)
+    # Accumulate contributions for coefficients for b.
+    tl.atomic_add(d_b_ptr + (b_offset + 0), db0, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 1), db1, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 2), db2, mask=mask)
+    tl.atomic_add(d_b_ptr + (b_offset + 3), db3, mask=mask)
         
 def rational_bwd_triton(grad_output, x, n, d, group):
     B, L, D = x.shape
