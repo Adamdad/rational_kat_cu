@@ -1,5 +1,6 @@
 import torch
 from src_triton.rational_triton import rational_triton_1dgroup, rational_fwd_triton
+import torch.nn as nn
 
 def _get_xps(z, len_numerator, len_denominator):
     """
@@ -212,8 +213,10 @@ def test_backward():
     # Create random input and coefficients.
     x = torch.randn(B, L, D, device=device, dtype=dtype)
     weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
+    weight_numerator = nn.Parameter(weight_numerator, requires_grad=True)
     # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
     weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
+    weight_denominator = nn.Parameter(weight_denominator, requires_grad=True)
     
     expected_output = torch.relu(x)
     loss_fn = torch.nn.MSELoss(reduction='mean')
