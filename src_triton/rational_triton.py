@@ -234,7 +234,7 @@ def rational_bwd_triton(grad_output, x, n, d, group):
 
 class rational_triton_1dgroup(torch.autograd.Function):
     @staticmethod
-    @torch.cuda.amp.custom_fwd(cast_inputs=torch.float32)
+    @torch.amp.custom_fwd(cast_inputs=torch.float32)
     def forward(ctx, input, weight_numerator, weight_denominator, group):
         """
         Forward pass of the custom autograd function.
@@ -255,7 +255,7 @@ class rational_triton_1dgroup(torch.autograd.Function):
         return x
 
     @staticmethod
-    @torch.cuda.amp.custom_bwd
+    @torch.amp.custom_bwd
     def backward(ctx, grad_output):
         """
         Backward pass of the custom autograd function.
