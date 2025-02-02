@@ -361,11 +361,11 @@ def benchmark_forward(x, numerator_weights, denominator_weights, group_size=4):
     results['cuda_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
     
-    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.gelu, x, numerator_weights, denominator_weights, group_size)
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.gelu, x)
     print(f"Throughput for GELU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['gelu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
-    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.relu, x, numerator_weights, denominator_weights, group_size)
+    avg_time_ms, peak_mem, throughput = benchmark_with_memory(torch.nn.functional.relu, x)
     print(f"Throughput for ReLU forward pass: {throughput:.2f} batches/sec, Peak memory: {peak_mem:.2f} MB")
     results['relu_forward_pass'] = {'throughput': throughput, 'peak_memory': peak_mem}
     
