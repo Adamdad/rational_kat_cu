@@ -285,7 +285,7 @@ def benchmark_backward(x, numerator_weights, denominator_weights, group_size=4):
     used_time /= 100
     print("Time taken by kat_rational.My_rational_1dgroup bwd:", used_time, "Peak memory:", peak_mem)
 
-def benchmark_with_memory(func, *args, n_iter=100, warmup=10, device=torch.device("cuda")):
+def benchmark_with_memory(func, *args, n_iter=500, warmup=10, device=torch.device("cuda")):
     """
     Benchmark a function running on the GPU using CUDA events and report memory usage.
 
