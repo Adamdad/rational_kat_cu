@@ -200,7 +200,7 @@ def benchmark_with_memory(func, *args, n_iter=100, warmup=10, device=torch.devic
 def test_backward():
     torch.manual_seed(0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dtype = torch.float16
+    dtype = torch.float32
     # Define dimensions and groups.
     B, L, D = 2, 4, 8  # Example: batch=2, length=4, features=8
     group = 4        # Make sure D is divisible by group
