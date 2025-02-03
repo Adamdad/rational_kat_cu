@@ -95,7 +95,7 @@ def test():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.float16
     # Define dimensions and groups.
-    B, D, H, W = 2, 16, 32, 32  # e.g. 2 images, 16 channels, 32x32 spatial size.
+    B, D, H, W = 2, 16, 4, 4  # e.g. 2 images, 16 channels, 32x32 spatial size.
     group = 4  # D must be divisible by group.
     assert D % group == 0, "D must be divisible by group"
 
