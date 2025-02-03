@@ -74,12 +74,13 @@ class KAT_Group(nn.Module):
         Forward pass of the module.
 
         Args:
-            input (Tensor): 3D input tensor with shape (batch, length, channels).
+            input (Tensor): 3D or 2D input tensor.
 
         Returns:
             Tensor: Processed tensor after applying rational function.
         """
-        assert input.dim() == 3, "Input tensor must be 3D (batch, length, channels)."
+        assert input.dim() == 3 or input.dim() == 2, "Input tensor must be 3D (batch, length, channels) or 2D (batch, channels)."
+    
     
         # Repeat the weights for all groups
         weight_numerator = self.weight_numerator.repeat(self.num_groups, 1)
@@ -94,4 +95,3 @@ class KAT_Group(nn.Module):
         """
         return f'num_groups={self.num_groups}, order={self.order}'
     
-# if __name__ == "__main__":

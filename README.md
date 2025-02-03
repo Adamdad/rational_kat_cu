@@ -51,17 +51,34 @@ class KAN(nn.Module):
         return x
 ```
 
-Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively. 
+Note: 
+1. For `[B, L, C]` and `[B, C]` input, please use `KAT_Group` class, which support tensors where channels comes in the end.
+2. For `[B, C, H, W]` input, please use `KAT_Group2D`. 
 
 PPS: I'm not a CUDA expert 😅. If you run into any issues or have suggestions for the code, please feel free to reach out or submit a pull request! 🚀
 
 # Add new function 
 
 To add new functions to the module:
-
 1. Open `kat_rational/fit.py`.
 2. Implement your custom function within this file.
 3. Add your function to `fit_and_plot_activation` to evaluate and visualize its performance.
+
+# Example
+Run GR-KAN on MNIST
+```shell
+python tests/mnist.py
+```
+Results
+```shell
+# Baseline (GELU Activation)
+GELU - Epoch 1: Loss 0.4548 | Epoch 10: Loss 0.0623
+Training Time: 84.52 seconds | Test Accuracy: 97.46%
+
+# Optimized (KAT 1DGroup Rational Activation)
+KAT 1DGroup - Epoch 1: Loss 0.3401 | Epoch 10: Loss 0.0245
+Training Time: 89.11 seconds | Test Accuracy: 97.53%
+```
 
 # Acknowlegement
 

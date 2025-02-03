@@ -149,18 +149,16 @@ def test_backward():
 
     # Create random input and coefficients.
     
-    x = torch.randn(B, D, H, W, device="cuda", dtype=torch.float32)
+    x = torch.randn(B, D, H, W, device=device, dtype=torch.float32)
     
     weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
     weight_numerator = nn.Parameter(weight_numerator, requires_grad=True)
-    # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
     weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
     weight_denominator = nn.Parameter(weight_denominator, requires_grad=True)
     
     expected_output = torch.relu(x)
     loss_fn = torch.nn.MSELoss(reduction='mean')
     
-    # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
     # Perform the rational function computation
     output = process_groups(D, group, x, weight_numerator, weight_denominator)
     loss = loss_fn(expected_output, output)
@@ -177,8 +175,12 @@ def test_backward():
     my_grad_n = weight_numerator.grad.clone()
     my_grad_d = weight_denominator.grad.clone()
     
-    print(my_output)
-    print(output)
+    print(my_grad_d)
+    print(torch_grad_d)
+    
+    print(my_grad_n)
+    print(torch_grad_n)
+    # print(output)
     assert torch.allclose(my_output, output, atol=1e-6), "Output mismatch"
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
