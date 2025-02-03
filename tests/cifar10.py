@@ -43,7 +43,8 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = CIFARNet(activation_func).to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    # optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     transform_train = transforms.Compose([
         transforms.RandomHorizontalFlip(),
