@@ -249,6 +249,4 @@ def test_backward():
 # Testing both implementations for equality
 # ======================================
 if __name__ == "__main__":
-    
     test_time()
-    # test_backward()
