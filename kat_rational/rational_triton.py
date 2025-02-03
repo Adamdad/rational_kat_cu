@@ -26,7 +26,7 @@ from torch import Tensor
 @triton.jit
 def rational_fwd_kernel(
     x_ptr, a_ptr, b_ptr, result_ptr,
-    B, L, D, group, x_size, D_per_group,
+    D, group, x_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
     pid = tl.program_id(axis=0)
@@ -78,7 +78,7 @@ def rational_fwd_kernel(
     tl.store(result_ptr + offs, P / Q, mask=mask)
 
 def rational_fwd_triton(x, n, d, group):
-    B, L, D = x.shape
+    D = x.shape[-1]
     x_size = x.numel()
     D_per_group = D // group
 
@@ -88,7 +88,7 @@ def rational_fwd_triton(x, n, d, group):
 
     rational_fwd_kernel[(num_blocks,)](
         x, n, d, result,
-        B, L, D, group, x_size, D_per_group,
+        D, group, x_size, D_per_group,
         BLOCK_SIZE=BLOCK_SIZE
     )
 
@@ -120,7 +120,7 @@ def rational_fwd_triton(x, n, d, group):
 def rational_bwd_kernel(
     grad_output_ptr, x_ptr, a_ptr, b_ptr,
     d_x_ptr, d_a_ptr, d_b_ptr,
-    B, L, D, group, x_size, n_size, d_size, D_per_group,
+    D, group, x_size, n_size, d_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
     pid = tl.program_id(axis=0)
@@ -216,7 +216,7 @@ def rational_bwd_kernel(
     tl.atomic_add(d_b_ptr + (b_offset + 3), db3, mask=mask)
         
 def rational_bwd_triton(grad_output, x, n, d, group):
-    B, L, D = x.shape
+    D = x.shape[-1]
     x_size = x.numel()
     n_size = n.numel()
     d_size = d.numel()
@@ -232,7 +232,7 @@ def rational_bwd_triton(grad_output, x, n, d, group):
     rational_bwd_kernel[(num_blocks,)](
         grad_output, x, n, d,
         d_x, d_n, d_d,
-        B, L, D, group, x_size, n_size, d_size, D_per_group,
+        D, group, x_size, n_size, d_size, D_per_group,
         BLOCK_SIZE=BLOCK_SIZE
     )
 
