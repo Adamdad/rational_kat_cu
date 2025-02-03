@@ -29,7 +29,6 @@ def rational_fwd_kernel(
     B, L, D, group, x_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
-    # Compute global index for each thread.
     pid = tl.program_id(0)
     offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = offs < x_size
@@ -37,7 +36,7 @@ def rational_fwd_kernel(
     # Load input elements.
     x_val = tl.load(x_ptr + offs, mask=mask)
 
-    # Compute d index and group index.
+    # Determine d index and group index.
     d_index = offs % D
     g_index = d_index // D_per_group
 
@@ -45,37 +44,48 @@ def rational_fwd_kernel(
     a_offset = g_index * 6
     b_offset = g_index * 4
 
-    # --- Vectorized loads for coefficients ---
-    # Instead of six separate loads, load all 6 numerator coefficients at once.
-    # (Assuming a_ptr is contiguous in groups of 6.)
-    a_idx = a_offset + tl.arange(0, 6)
-    a_vals = tl.load(a_ptr + a_idx)  # shape: [6]
-    
-    # Similarly, load 4 denominator coefficients and take their absolute values.
-    b_idx = b_offset + tl.arange(0, 4)
-    b_vals = tl.abs(tl.load(b_ptr + b_idx))  # shape: [4]
+    # --- Vectorized load for numerator coefficients ---
+    # Triton requires the range in tl.arange to be a power of 2.
+    # Use 8 instead of 6 and mask out the last 2 entries.
+    a_indices = tl.arange(0, 8)  # 8 is a power-of-2.
+    a_mask = a_indices < 6       # Only indices [0,1,2,3,4,5] are valid.
+    # Use the mask to load, providing 0 as a default for the extra entries.
+    a_vals = tl.load(a_ptr + a_offset + a_indices, mask=a_mask, other=0)
 
-    # Compute absolute value of x only once.
+    # Unpack only the first 6 coefficients.
+    a0 = a_vals[0]
+    a1 = a_vals[1]
+    a2 = a_vals[2]
+    a3 = a_vals[3]
+    a4 = a_vals[4]
+    a5 = a_vals[5]
+
+    # Load denominator coefficients (4 is already a power-of-2).
+    b_indices = tl.arange(0, 4)
+    b_vals = tl.abs(tl.load(b_ptr + b_offset + b_indices))
+    # Unpack denominator coefficients.
+    s_b0 = b_vals[0]
+    s_b1 = b_vals[1]
+    s_b2 = b_vals[2]
+    s_b3 = b_vals[3]
+
     abs_x = tl.abs(x_val)
 
-    # --- Evaluate numerator polynomial P(x) using Horner's method ---
-    # P(x) = a0 + a1*x + a2*x^2 + ... + a5*x^5.
-    P = a_vals[5]
-    P = tl.fma(P, x_val, a_vals[4])
-    P = tl.fma(P, x_val, a_vals[3])
-    P = tl.fma(P, x_val, a_vals[2])
-    P = tl.fma(P, x_val, a_vals[1])
-    P = tl.fma(P, x_val, a_vals[0])
+    # Compute numerator polynomial P(x) via Horner's method.
+    P = a5
+    P = tl.fma(P, x_val, a4)
+    P = tl.fma(P, x_val, a3)
+    P = tl.fma(P, x_val, a2)
+    P = tl.fma(P, x_val, a1)
+    P = tl.fma(P, x_val, a0)
 
-    # --- Evaluate denominator polynomial Q(x) ---
-    # Q(x) = 1 + b0*|x| + b1*|x|^2 + b2*|x|^3 + b3*|x|^4.
-    Q = b_vals[3]
-    Q = tl.fma(Q, abs_x, b_vals[2])
-    Q = tl.fma(Q, abs_x, b_vals[1])
-    Q = tl.fma(Q, abs_x, b_vals[0])
+    # Compute denominator polynomial Q(x).
+    Q = s_b3
+    Q = tl.fma(Q, abs_x, s_b2)
+    Q = tl.fma(Q, abs_x, s_b1)
+    Q = tl.fma(Q, abs_x, s_b0)
     Q = tl.fma(Q, abs_x, 1.0)
 
-    # Write the result.
     tl.store(result_ptr + offs, P / Q, mask=mask)
 
 def rational_fwd_triton(x, n, d, group):
