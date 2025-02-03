@@ -3,12 +3,10 @@ from torch import nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from rational.torch import Rational
 import time
 import numpy as np
 import random
-from kat_rational import KAT_1DGroup, KAT_1DGroupv2
-from rational.torch import Rational
+from kat_rational import KAT_Group2D
 
 def set_random_seed(seed_value=42):
     torch.manual_seed(seed_value)
@@ -95,13 +93,5 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     print(f'{label} Testing Accuracy: {accuracy:.2f}%, Total time: {duration:.2f} seconds.')
 
 if __name__ == "__main__":
-    # gelu = nn.GELU
-    # train_and_benchmark(gelu, 'GELU')
-    
-    # rational_activation = Rational
-    # train_and_benchmark(rational_activation, 'Rational GELU')
-
-    # Placeholder for your custom KAT_1DGroup implementation
-    # Assuming you have a similar API and it's suitable for convolutional layers
-    kat_activation = KAT_1DGroupv2  # Replace with your actual KAT_1DGroup class if available
+    kat_activation = KAT_Group2D  # Replace with your actual KAT_1DGroup class if available
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
