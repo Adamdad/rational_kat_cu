@@ -1,5 +1,5 @@
 import torch
-from src_triton.rational_triton import RationalTriton1DGroup, rational_fwd_triton
+from kat_rational.rational_triton import RationalTriton1DGroup, rational_fwd_triton
 import torch.nn as nn
 
 def _get_xps(z, len_numerator, len_denominator):
