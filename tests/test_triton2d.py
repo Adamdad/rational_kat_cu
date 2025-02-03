@@ -175,8 +175,9 @@ def test_backward():
     my_grad_n = weight_numerator.grad.clone()
     my_grad_d = weight_denominator.grad.clone()
     
-    print(my_output)
-    print(output)
+    print(my_grad_d)
+    print(torch_grad_d)
+    # print(output)
     assert torch.allclose(my_output, output, atol=1e-6), "Output mismatch"
     assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
