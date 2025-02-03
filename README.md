@@ -65,9 +65,9 @@ To add new functions to the module:
 3. Add your function to `fit_and_plot_activation` to evaluate and visualize its performance.
 
 # Example
-Run GR-KAN on MNIST
+- Run GR-KAN on MNIST
 ```shell
-python tests/mnist.py
+python example/mnist.py
 ```
 Results
 ```shell
@@ -78,6 +78,19 @@ Training Time: 84.52 seconds | Test Accuracy: 97.46%
 # Optimized (KAT 1DGroup Rational Activation)
 KAT 1DGroup - Epoch 1: Loss 0.3401 | Epoch 10: Loss 0.0245
 Training Time: 89.11 seconds | Test Accuracy: 97.53%
+```
+
+- Run GR-KAN-2D on CIFAR10
+```shell
+python example/cifar10.py
+```
+Results
+```shell
+ReLU Training completed in 136.78 seconds.
+ReLU Testing Accuracy: 76.60%, Total time: 138.47 seconds.
+
+KAT 2DGroup Training completed in 416.74 seconds.
+KAT 2DGroup Testing Accuracy: 80.08%, Total time: 418.46 seconds.
 ```
 
 # Acknowlegement
