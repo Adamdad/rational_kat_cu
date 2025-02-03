@@ -26,7 +26,7 @@ class CIFARNet(nn.Module):
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.act2 = activation_func()
         self.fc1 = nn.Linear(128 * 8 * 8, 256)
-        self.act3 = activation_func()
+        self.act3 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(256, 10)
 
     def forward(self, x):
