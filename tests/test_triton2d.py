@@ -134,12 +134,60 @@ def test():
     print(y_torch)
     
     
+def test_backward():
+    torch.manual_seed(0)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dtype = torch.float32
+    
+    B, D, H, W = 2, 16, 4, 4  # e.g. 2 images, 16 channels, 32x32 spatial size.
+    group = 4  # D must be divisible by group.
+    assert D % group == 0, "D must be divisible by group"
+
+    # Coefficient shapes.
+    len_num = 6     # numerator coefficients (degree 5)
+    len_deno = 4    # denominator coefficients (degree 3, plus constant)
+
+    # Create random input and coefficients.
+    
+    x = torch.randn(B, D, H, W, device="cuda", dtype=torch.float32)
+    
+    weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
+    weight_numerator = nn.Parameter(weight_numerator, requires_grad=True)
+    # weight_numerator_g = weight_numerator.unsqueeze(0).repeat(group, 1)
+    weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
+    weight_denominator = nn.Parameter(weight_denominator, requires_grad=True)
+    
+    expected_output = torch.relu(x)
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+    
+    # weight_denominator_g = weight_denominator.unsqueeze(0).repeat(group, 1)
+    # Perform the rational function computation
+    output = process_groups(D, group, x, weight_numerator, weight_denominator)
+    loss = loss_fn(expected_output, output)
+    loss.backward()
+    torch_grad_n = weight_numerator.grad.clone()
+    torch_grad_d = weight_denominator.grad.clone()
+    
+    weight_numerator.grad.zero_()
+    weight_denominator.grad.zero_()
+    
+    my_output = RationalTriton2D.apply(x, weight_numerator, weight_denominator, group)
+    loss = loss_fn(expected_output, my_output)
+    loss.backward()
+    my_grad_n = weight_numerator.grad.clone()
+    my_grad_d = weight_denominator.grad.clone()
+    
+    print(my_output)
+    print(output)
+    assert torch.allclose(my_output, output, atol=1e-6), "Output mismatch"
+    assert torch.allclose(torch_grad_n, my_grad_n), "Numerator gradient mismatch"
+    assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
+    
+    print("Backward pass test passed")
 
 # ======================================
 # Testing both implementations for equality
 # ======================================
 if __name__ == "__main__":
-    
-    # test_time()
-    # test_backward()
-    test()
+    # test()
+    test_backward()
