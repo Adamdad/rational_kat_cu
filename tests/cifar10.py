@@ -7,6 +7,7 @@ import time
 import numpy as np
 import random
 from kat_rational import KAT_Group2D
+from tqdm import tqdm
 
 def set_random_seed(seed_value=42):
     torch.manual_seed(seed_value)
@@ -64,15 +65,28 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
     start_time = time.time()
     for epoch in range(epochs):
         total_loss = 0
-        for images, labels in data_loader:
+        # Wrap your DataLoader with tqdm to monitor progress
+        for batch_idx, (images, labels) in enumerate(tqdm(data_loader, desc=f"Epoch {epoch+1}", unit="batch")):
             images, labels = images.to(device), labels.to(device)
+            
+            # Forward pass
             outputs = model(images)
+            
+            # Compute loss
             loss = criterion(outputs, labels)
+            
+            # Backpropagation
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            # Update total loss
             total_loss += loss.item()
-        print(f'{label} - Epoch {epoch+1}: Loss {total_loss / len(data_loader)}')
+            
+            # Optionally, display the current loss or any other metrics
+            # Using tqdm’s set_postfix to update the progress bar
+            tqdm.write(f"Batch {batch_idx} Loss: {loss.item():.4f}")
+            
     duration = time.time() - start_time
     print(f'{label} Training completed in {duration:.2f} seconds.')
     

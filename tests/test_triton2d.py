@@ -221,13 +221,8 @@ def test_fit():
     start_time = time.time()
 
     for _ in range(num_iter):
-        # with torch.cuda.amp.autocast():  # Autocast scope for mixed precision
         output = RationalTriton2D.apply(x, weight_numerator, weight_denominator, group)
-        # output = Rational_CUDA_A_1DGroup(x.half(), numerator_weights.half(), denominator_weights.half(), group_size)
         loss = loss_fn(expected_output, output)
-            # print("Inside autocast, output dtype:", output.dtype)  # Check dtype of output within autocast
-
-        # print("Outside autocast, x dtype:", x.dtype)  # This will still show the original dtype of x
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
