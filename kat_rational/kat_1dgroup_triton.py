@@ -94,4 +94,3 @@ class KAT_Group(nn.Module):
         """
         return f'num_groups={self.num_groups}, order={self.order}'
     
-# if __name__ == "__main__":
