@@ -1,6 +1,8 @@
 import torch
 from kat_rational.rational_triton2d import rational_fwd_triton_2d, rational_bwd_triton_2d, RationalTriton2D
 import torch.nn as nn
+import time
+import torch.optim as optim
 
 def _get_xps(z, len_numerator, len_denominator):
     """
@@ -186,10 +188,61 @@ def test_backward():
     assert torch.allclose(torch_grad_d, my_grad_d), "Denominator gradient mismatch"
     
     print("Backward pass test passed")
+    
+def test_fit():
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dtype = torch.float32
+    
+    B, D, H, W = 2, 16, 4, 4  # e.g. 2 images, 16 channels, 32x32 spatial size.
+    group = 4  # D must be divisible by group.
+    assert D % group == 0, "D must be divisible by group"
+
+    # Coefficient shapes.
+    len_num = 6     # numerator coefficients (degree 5)
+    len_deno = 4    # denominator coefficients (degree 3, plus constant)
+    num_iter = 500
+    # Create random input and coefficients.
+    
+    x = torch.randn(B, D, H, W, device=device, dtype=torch.float32)
+    
+    weight_numerator = torch.randn(group, len_num, device=device, dtype=dtype)
+    weight_numerator = nn.Parameter(weight_numerator, requires_grad=True)
+    weight_denominator = torch.randn(group, len_deno, device=device, dtype=dtype)
+    weight_denominator = nn.Parameter(weight_denominator, requires_grad=True)
+    
+    expected_output = torch.cat([torch.sigmoid(x[:,:D//2,:,:]), torch.relu(x[:,D//2:,:,:])], dim=1)
+    loss_fn = torch.nn.MSELoss(reduction='mean')
+    optimizer = optim.Adam([weight_numerator, weight_denominator], lr=0.01)
+    # scaler = torch.cuda.amp.GradScaler()
+
+    torch.cuda.reset_peak_memory_stats()
+    total_time = 0
+    start_time = time.time()
+
+    for _ in range(num_iter):
+        output = RationalTriton2D.apply(x, weight_numerator, weight_denominator, group)
+        loss = loss_fn(expected_output, output)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        if _ % 10 == 0:
+            print("Iteration:", _, "Loss:", loss.item())
+
+        torch.cuda.synchronize()
+        total_time += time.time() - start_time
+        start_time = time.time()
+
+    peak_mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    average_time = total_time / 100
+    print("Time taken by our group bwd:", average_time, "s, Peak memory:", peak_mem, "MB")
+    
 
 # ======================================
 # Testing both implementations for equality
 # ======================================
 if __name__ == "__main__":
     # test()
-    test_backward()
+    # test_backward()
+    test_fit()
