@@ -29,6 +29,7 @@ def rational_fwd_kernel(
     B, L, D, group, x_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
+    # Compute the global offsets for this kernel instance.
     pid = tl.program_id(0)
     offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = offs < x_size
@@ -36,42 +37,52 @@ def rational_fwd_kernel(
     # Load input elements.
     x_val = tl.load(x_ptr + offs, mask=mask)
 
-    # Determine d index and group index.
+    # Compute the d-index (within D) and the corresponding group index.
     d_index = offs % D
     g_index = d_index // D_per_group
 
-    # Compute coefficient offsets.
-    a_offset = g_index * 6
-    b_offset = g_index * 4
+    # Each thread's coefficient offset is computed as:
+    a_offset = g_index * 6   # shape: [BLOCK_SIZE]
+    b_offset = g_index * 4   # shape: [BLOCK_SIZE]
 
     # --- Vectorized load for numerator coefficients ---
-    # Triton requires the range in tl.arange to be a power of 2.
-    # Use 8 instead of 6 and mask out the last 2 entries.
-    a_indices = tl.arange(0, 8)  # 8 is a power-of-2.
-    a_mask = a_indices < 6       # Only indices [0,1,2,3,4,5] are valid.
-    # Use the mask to load, providing 0 as a default for the extra entries.
-    a_vals = tl.load(a_ptr + a_offset + a_indices, mask=a_mask, other=0)
+    # Triton requires tl.arange range to be a power of 2. For 6 coefficients, we use 8 and mask out extras.
+    a_indices = tl.arange(0, 8)          # shape: [8]
+    # Unsqueeze a_offset so that it has shape [BLOCK_SIZE, 1].
+    a_offset_vec = tl.unsqueeze(a_offset, 1)   # shape: [BLOCK_SIZE, 1]
+    # Broadcast addition yields indices of shape [BLOCK_SIZE, 8].
+    indices = a_offset_vec + a_indices
+    # Create a mask for valid indices (only first 6 are valid).
+    a_mask = tl.unsqueeze(a_indices < 6, 0)      # shape: [1, 8], which broadcasts to [BLOCK_SIZE, 8]
+    # Load the numerator coefficients.
+    a_vals = tl.load(a_ptr + indices, mask=a_mask, other=0)  # shape: [BLOCK_SIZE, 8]
+    # Extract the first 6 coefficients per thread.
+    a0 = a_vals[:, 0]
+    a1 = a_vals[:, 1]
+    a2 = a_vals[:, 2]
+    a3 = a_vals[:, 3]
+    a4 = a_vals[:, 4]
+    a5 = a_vals[:, 5]
 
-    # Unpack only the first 6 coefficients.
-    a0 = a_vals[0]
-    a1 = a_vals[1]
-    a2 = a_vals[2]
-    a3 = a_vals[3]
-    a4 = a_vals[4]
-    a5 = a_vals[5]
+    # Load denominator coefficients.
+    # For 4 coefficients, 4 is already a power-of-2.
+    b_indices = tl.arange(0, 4)          # shape: [4]
+    # Here b_offset is shape [BLOCK_SIZE] so we unsqueeze it to add b_indices.
+    b_offset_vec = tl.unsqueeze(b_offset, 1)  # shape: [BLOCK_SIZE, 1]
+    b_full_indices = b_offset_vec + b_indices  # shape: [BLOCK_SIZE, 4]
+    b_vals = tl.load(b_ptr + b_full_indices)     # shape: [BLOCK_SIZE, 4]
+    # Take absolute values.
+    b_vals = tl.abs(b_vals)
+    s_b0 = b_vals[:, 0]
+    s_b1 = b_vals[:, 1]
+    s_b2 = b_vals[:, 2]
+    s_b3 = b_vals[:, 3]
 
-    # Load denominator coefficients (4 is already a power-of-2).
-    b_indices = tl.arange(0, 4)
-    b_vals = tl.abs(tl.load(b_ptr + b_offset + b_indices))
-    # Unpack denominator coefficients.
-    s_b0 = b_vals[0]
-    s_b1 = b_vals[1]
-    s_b2 = b_vals[2]
-    s_b3 = b_vals[3]
-
+    # Compute absolute value of x.
     abs_x = tl.abs(x_val)
 
-    # Compute numerator polynomial P(x) via Horner's method.
+    # Evaluate the numerator polynomial P(x) using Horner’s method.
+    # (Each of a0, ..., a5 is a vector of shape [BLOCK_SIZE])
     P = a5
     P = tl.fma(P, x_val, a4)
     P = tl.fma(P, x_val, a3)
@@ -79,13 +90,14 @@ def rational_fwd_kernel(
     P = tl.fma(P, x_val, a1)
     P = tl.fma(P, x_val, a0)
 
-    # Compute denominator polynomial Q(x).
+    # Evaluate the denominator polynomial Q(x).
     Q = s_b3
     Q = tl.fma(Q, abs_x, s_b2)
     Q = tl.fma(Q, abs_x, s_b1)
     Q = tl.fma(Q, abs_x, s_b0)
     Q = tl.fma(Q, abs_x, 1.0)
 
+    # Write the output.
     tl.store(result_ptr + offs, P / Q, mask=mask)
 
 def rational_fwd_triton(x, n, d, group):
