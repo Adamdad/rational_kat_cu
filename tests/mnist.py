@@ -1,10 +1,9 @@
 import torch
-from kat_rational import KAT_1DGroup, KAT_1DGroupv2
+from kat_rational import KAT_Group
 from torch import nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from rational.torch import Rational
 import time
 import numpy as np
 import random
@@ -83,10 +82,10 @@ def train_and_benchmark(activation_func, label, epochs=10, seed=42):
 
 
 if __name__ == "__main__":
-    gelu = nn.GELU()
-    train_and_benchmark(gelu, 'GELU')
+    # gelu = nn.GELU()
+    # train_and_benchmark(gelu, 'GELU')
     
-    kat_activation = KAT_1DGroupv2(num_groups=8, mode="gelu") # Placeholder for KAT_1DGroup if not accessible
+    kat_activation = KAT_Group() # Placeholder for KAT_1DGroup if not accessible
     train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
     print(kat_activation.weight_numerator, kat_activation.weight_denominator)
 
