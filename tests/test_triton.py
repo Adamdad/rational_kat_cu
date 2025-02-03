@@ -250,5 +250,5 @@ def test_backward():
 # ======================================
 if __name__ == "__main__":
     
-    # test_time()
-    test_backward()
+    test_time()
+    # test_backward()
