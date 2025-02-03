@@ -67,7 +67,7 @@ To add new functions to the module:
 # Example
 Run GR-KAN on MNIST
 ```shell
-python tests/mnist.py
+python example/mnist.py
 ```
 Results
 ```shell
