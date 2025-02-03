@@ -51,7 +51,9 @@ class KAN(nn.Module):
         return x
 ```
 
-Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively. 
+Note: 
+1. For `[B, L, C]` and `[B, C]` input, please use `KAT_Group` class, which support tensors where channels comes in the end.
+2. For `[B, C, H, W]` input, please use `KAT_Group2D`. 
 
 PPS: I'm not a CUDA expert 😅. If you run into any issues or have suggestions for the code, please feel free to reach out or submit a pull request! 🚀
 
