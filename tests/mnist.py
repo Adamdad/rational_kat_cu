@@ -85,7 +85,7 @@ if __name__ == "__main__":
     gelu = nn.GELU()
     train_and_benchmark(gelu, 'GELU')
     
-    # kat_activation = KAT_Group() # Placeholder for KAT_1DGroup if not accessible
-    # train_and_benchmark(kat_activation, 'KAT 1DGroup (as ReLU placeholder)')
-    # print(kat_activation.weight_numerator, kat_activation.weight_denominator)
+    kat_activation = KAT_Group() # Placeholder for KAT_1DGroup if not accessible
+    train_and_benchmark(kat_activation, 'KAT 1DGroup')
+    print(kat_activation.weight_numerator, kat_activation.weight_denominator)
 

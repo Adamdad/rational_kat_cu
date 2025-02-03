@@ -60,10 +60,25 @@ PPS: I'm not a CUDA expert 😅. If you run into any issues or have suggestions 
 # Add new function 
 
 To add new functions to the module:
-
 1. Open `kat_rational/fit.py`.
 2. Implement your custom function within this file.
 3. Add your function to `fit_and_plot_activation` to evaluate and visualize its performance.
+
+# Example
+Run GR-KAN on MNIST
+```shell
+python tests/mnist.py
+```
+Results
+```shell
+# Baseline (GELU Activation)
+GELU - Epoch 1: Loss 0.4548 | Epoch 10: Loss 0.0623
+Training Time: 84.52 seconds | Test Accuracy: 97.46%
+
+# Optimized (KAT 1DGroup Rational Activation)
+KAT 1DGroup - Epoch 1: Loss 0.3401 | Epoch 10: Loss 0.0245
+Training Time: 89.11 seconds | Test Accuracy: 97.53%
+```
 
 # Acknowlegement
 
