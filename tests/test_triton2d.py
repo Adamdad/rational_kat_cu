@@ -213,7 +213,7 @@ def test_fit():
     
     expected_output = torch.cat([torch.sigmoid(x[:,:D//2,:,:]), torch.relu(x[:,D//2:,:,:])], dim=1)
     loss_fn = torch.nn.MSELoss(reduction='mean')
-    optimizer = optim.Adam([weight_numerator, weight_denominator], lr=0.001)
+    optimizer = optim.Adam([weight_numerator, weight_denominator], lr=0.01)
     # scaler = torch.cuda.amp.GradScaler()
 
     torch.cuda.reset_peak_memory_stats()
