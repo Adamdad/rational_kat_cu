@@ -2,8 +2,6 @@ import torch
 import triton
 import triton.language as tl
 from torch import Tensor
-import torch.nn as nn
-
 # ==============================================================================
 # 2D Forward Kernel: operates on a tensor of shape [B, D, H, W] in-place.
 # The rational function is applied along the D dimension.
@@ -247,17 +245,3 @@ class RationalTriton2D(torch.autograd.Function):
         )
         return d_input, d_weight_numerator, d_weight_denominator, None
 
-if __name__ == '__main__':
-    # Example: input shape [B, D, H, W]
-    B, D, H, W = 2, 16, 32, 32  # e.g. 2 images, 16 channels, 32x32 spatial size.
-    group = 4  # D must be divisible by group.
-    x = torch.randn(B, D, H, W, device="cuda", dtype=torch.float32)
-    a = torch.randn(group, 6, device="cuda", dtype=torch.float32)
-    a = nn.Parameter(a, requires_grad=True)
-    b = torch.randn(group, 4, device="cuda", dtype=torch.float32)
-    b = nn.Parameter(b, requires_grad=True)
-
-    # Forward pass.
-    y = RationalTriton2D.apply(x, a, b, group)
-    loss = y.sum()
-    loss.backward()
