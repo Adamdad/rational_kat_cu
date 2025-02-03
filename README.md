@@ -1,9 +1,10 @@
-# CUDA Rational Function for Kolmogorov–Arnold Transformer (KAT)
+# CUDA/Triton Rational Function for Kolmogorov–Arnold Transformer (KAT)
 
 This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT). It support the training and inference of https://github.com/Adamdad/kat.
 
 # News
 - [x] 2025.2.1 The `triton` version of GR-KAT has been implemented. Installing and running KAT is now much easier!
+- [x] 2025.2.2 We implement the 2D version of GR-KAN, using `triton`. The input tensor size is now support `[B, C, H, W]`.
 
 # Installation 
 To install the extension, follow these steps:
@@ -51,10 +52,6 @@ class KAN(nn.Module):
 ```
 
 Note: The `KAT_Group` class accepts tensors with dimensions `[B, L, C]`, representing batch size, sequence length, and channel count, respectively. 
-
-- [ ] We will try to implement the 2D version, with `[B, C, H, W]` soon. Stay tuned.
-
-PS: Remember to `from kat_rational import KAT_Group` after `import torch`, to avoid errors.
 
 PPS: I'm not a CUDA expert 😅. If you run into any issues or have suggestions for the code, please feel free to reach out or submit a pull request! 🚀
 
