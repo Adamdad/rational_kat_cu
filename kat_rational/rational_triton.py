@@ -29,14 +29,15 @@ def rational_fwd_kernel(
     B, L, D, group, x_size, D_per_group,
     BLOCK_SIZE: tl.constexpr
 ):
-    pid = tl.program_id(axis=0)
+    # Compute global index for each thread.
+    pid = tl.program_id(0)
     offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = offs < x_size
 
     # Load input elements.
     x_val = tl.load(x_ptr + offs, mask=mask)
 
-    # Determine d index and group index.
+    # Compute d index and group index.
     d_index = offs % D
     g_index = d_index // D_per_group
 
@@ -44,37 +45,37 @@ def rational_fwd_kernel(
     a_offset = g_index * 6
     b_offset = g_index * 4
 
-    # Load numerator coefficients.
-    s_a0 = tl.load(a_ptr + a_offset + 0)
-    s_a1 = tl.load(a_ptr + a_offset + 1)
-    s_a2 = tl.load(a_ptr + a_offset + 2)
-    s_a3 = tl.load(a_ptr + a_offset + 3)
-    s_a4 = tl.load(a_ptr + a_offset + 4)
-    s_a5 = tl.load(a_ptr + a_offset + 5)
+    # --- Vectorized loads for coefficients ---
+    # Instead of six separate loads, load all 6 numerator coefficients at once.
+    # (Assuming a_ptr is contiguous in groups of 6.)
+    a_idx = a_offset + tl.arange(0, 6)
+    a_vals = tl.load(a_ptr + a_idx)  # shape: [6]
+    
+    # Similarly, load 4 denominator coefficients and take their absolute values.
+    b_idx = b_offset + tl.arange(0, 4)
+    b_vals = tl.abs(tl.load(b_ptr + b_idx))  # shape: [4]
 
-    # Load denominator coefficients (using absolute value).
-    s_b0 = tl.abs(tl.load(b_ptr + b_offset + 0))
-    s_b1 = tl.abs(tl.load(b_ptr + b_offset + 1))
-    s_b2 = tl.abs(tl.load(b_ptr + b_offset + 2))
-    s_b3 = tl.abs(tl.load(b_ptr + b_offset + 3))
-
+    # Compute absolute value of x only once.
     abs_x = tl.abs(x_val)
 
-    # Compute numerator polynomial P(x) via Horner's method.
-    P = s_a5
-    P = tl.fma(P, x_val, s_a4)
-    P = tl.fma(P, x_val, s_a3)
-    P = tl.fma(P, x_val, s_a2)
-    P = tl.fma(P, x_val, s_a1)
-    P = tl.fma(P, x_val, s_a0)
+    # --- Evaluate numerator polynomial P(x) using Horner's method ---
+    # P(x) = a0 + a1*x + a2*x^2 + ... + a5*x^5.
+    P = a_vals[5]
+    P = tl.fma(P, x_val, a_vals[4])
+    P = tl.fma(P, x_val, a_vals[3])
+    P = tl.fma(P, x_val, a_vals[2])
+    P = tl.fma(P, x_val, a_vals[1])
+    P = tl.fma(P, x_val, a_vals[0])
 
-    # Compute denominator polynomial Q(x).
-    Q = s_b3
-    Q = tl.fma(Q, abs_x, s_b2)
-    Q = tl.fma(Q, abs_x, s_b1)
-    Q = tl.fma(Q, abs_x, s_b0)
+    # --- Evaluate denominator polynomial Q(x) ---
+    # Q(x) = 1 + b0*|x| + b1*|x|^2 + b2*|x|^3 + b3*|x|^4.
+    Q = b_vals[3]
+    Q = tl.fma(Q, abs_x, b_vals[2])
+    Q = tl.fma(Q, abs_x, b_vals[1])
+    Q = tl.fma(Q, abs_x, b_vals[0])
     Q = tl.fma(Q, abs_x, 1.0)
 
+    # Write the result.
     tl.store(result_ptr + offs, P / Q, mask=mask)
 
 def rational_fwd_triton(x, n, d, group):
