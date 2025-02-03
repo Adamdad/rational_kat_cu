@@ -2,6 +2,7 @@ import torch
 import triton
 import triton.language as tl
 from torch import Tensor
+import torch.nn as nn
 
 # ==============================================================================
 # 2D Forward Kernel: operates on a tensor of shape [B, D, H, W] in-place.
@@ -252,7 +253,9 @@ if __name__ == '__main__':
     group = 4  # D must be divisible by group.
     x = torch.randn(B, D, H, W, device="cuda", dtype=torch.float32)
     a = torch.randn(group, 6, device="cuda", dtype=torch.float32)
+    a = nn.Parameter(a, requires_grad=True)
     b = torch.randn(group, 4, device="cuda", dtype=torch.float32)
+    b = nn.Parameter(b, requires_grad=True)
 
     # Forward pass.
     y = RationalTriton2D.apply(x, a, b, group)
