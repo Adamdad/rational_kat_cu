@@ -1,6 +1,6 @@
-# CUDA/Triton Rational Function for Kolmogorov–Arnold Transformer (KAT)
+# Triton/CUDA Rational Function for Kolmogorov–Arnold Transformer (KAT)
 
-This CUDA C++ extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT). It support the training and inference of https://github.com/Adamdad/kat.
+This repo include the **trition** and CUDA extension facilitates the use of group rational functions in Kolmogorov–Arnold Transformers (KAT). It support the training and inference of https://github.com/Adamdad/kat.
 
 # News
 - [x] 2025.2.1 The `triton` version of GR-KAT has been implemented. Installing and running KAT is now much easier!
